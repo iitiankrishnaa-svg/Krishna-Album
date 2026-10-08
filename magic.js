@@ -90,8 +90,8 @@ function initMagicCanvas() {
     };
 
     function resize() {
-        width = canvas.parentElement.clientWidth;
-        height = canvas.parentElement.clientHeight;
+        width = window.innerWidth;
+        height = window.innerHeight;
         canvas.width = width;
         canvas.height = height;
         initParticles();
