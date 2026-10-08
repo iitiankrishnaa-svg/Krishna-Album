@@ -191,9 +191,11 @@ function init3DCarousel() {
 
     // 4. Interaction & Controls
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let autoRotateSpeed = prefersReducedMotion ? 0 : 0.002;
+    let autoRotateSpeed = prefersReducedMotion ? 0 : 0.0008; // Slower speed
+    let autoRotateDirection = 1; // 1 for left-to-right, -1 for right-to-left
     
     let isDragging = false;
+    let dragDistance = 0;
     let previousX = 0;
     let previousY = 0;
     let velocity = 0;
@@ -204,50 +206,25 @@ function init3DCarousel() {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    const overlayText = document.getElementById('globe-overlay-text');
-    const overlayTitle = document.getElementById('globe-overlay-title');
-    const overlayDesc = document.getElementById('globe-overlay-desc');
-    const overlayDate = document.getElementById('globe-overlay-date');
-
-    function updateOverlay(mesh) {
-        if (!mesh) {
-            overlayText.style.opacity = 0;
-            return;
-        }
-        const data = mesh.userData.data;
-        overlayTitle.textContent = data.title || 'Beautiful Memory';
-        overlayDesc.textContent = data.desc || '';
-        
-        if (data.date) {
-            overlayDate.textContent = data.date;
-            overlayDate.style.display = 'inline-block';
-        } else {
-            overlayDate.style.display = 'none';
-        }
-        overlayText.style.opacity = 1;
-    }
-
     function deselectAll() {
-        if (!selectedMesh) return; // HUGE OPTIMIZATION: Prevent creating hundreds of GSAP tweens if nothing is actively selected
+        if (!selectedMesh) return;
         
         gsap.to(selectedMesh.scale, { x: 1, y: 1, z: 1, duration: 0.4 });
         gsap.to(selectedMesh.material.emissive, { r: 0, g: 0, b: 0, duration: 0.4 });
         
         selectedMesh = null;
-        updateOverlay(null);
     }
 
     function selectMesh(mesh) {
-        if(selectedMesh === mesh) return; // already selected
+        if(selectedMesh === mesh) return;
         deselectAll();
         selectedMesh = mesh;
         
-        // Premium subtle glow & scale
+        // Premium subtle glow & pop scale
         gsap.to(mesh.scale, { x: 1.15, y: 1.15, z: 1.15, duration: 0.6, ease: "back.out(1.5)" });
-        // Subtle pink/gold emissive glow
         gsap.to(mesh.material.emissive, { r: 0.15, g: 0.05, b: 0.1, duration: 0.6 });
         
-        // Calculate shortest path rotation
+        // Calculate shortest path rotation to bring mesh to center
         let currentGroupRot = globeGroup.rotation.y % (Math.PI * 2);
         if (currentGroupRot < 0) currentGroupRot += Math.PI * 2;
         
@@ -266,62 +243,96 @@ function init3DCarousel() {
             duration: 1.2, 
             ease: "power2.inOut",
             onComplete: () => {
-                isInteracting = false;
+                // Keep it focused until they move their mouse away
                 velocity = 0;
             }
         });
-        
-        updateOverlay(mesh);
     }
 
     // Pointer Events
     renderer.domElement.addEventListener('pointerdown', (e) => {
         isDragging = true;
-        isInteracting = true;
+        dragDistance = 0;
         previousX = e.clientX;
         previousY = e.clientY;
         velocity = 0;
         gsap.killTweensOf(globeGroup.rotation);
-        
-        const rect = renderer.domElement.getBoundingClientRect();
-        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(meshes);
-        if (intersects.length > 0) {
-            selectMesh(intersects[0].object);
-        } else {
-            deselectAll();
-        }
+        isInteracting = true;
     });
 
     window.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
+        const rect = renderer.domElement.getBoundingClientRect();
         
-        const deltaX = e.clientX - previousX;
-        const deltaY = e.clientY - previousY;
-        
-        // If they are scrolling vertically more than horizontally, don't spin globe aggressively
-        if (Math.abs(deltaY) > Math.abs(deltaX) + 2) {
-            // Probably scrolling page
-        } else {
-            // Horizontal rotation
-            globeGroup.rotation.y += deltaX * 0.005;
-            velocity = deltaX * 0.005;
+        if (isDragging) {
+            const deltaX = e.clientX - previousX;
+            const deltaY = e.clientY - previousY;
+            dragDistance += Math.abs(deltaX) + Math.abs(deltaY);
             
-            if (Math.abs(deltaX) > 3) {
-                deselectAll(); 
+            // If dragging horizontally, update direction
+            if (Math.abs(deltaX) > 1) {
+                autoRotateDirection = Math.sign(deltaX);
+            }
+            
+            if (Math.abs(deltaY) > Math.abs(deltaX) + 2) {
+                // Probably scrolling page
+            } else {
+                globeGroup.rotation.y += deltaX * 0.005;
+                velocity = deltaX * 0.005;
+                
+                if (dragDistance > 5) {
+                    deselectAll(); 
+                }
+            }
+            
+            previousX = e.clientX;
+            previousY = e.clientY;
+        } else {
+            // Not dragging. Check if mouse leaves the centered picture
+            if (selectedMesh && !gsap.isTweening(globeGroup.rotation)) {
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                // Only un-pop if the cursor is within the canvas but not on the selected mesh
+                if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects([selectedMesh]);
+                    if (intersects.length === 0) {
+                        deselectAll();
+                        isInteracting = false;
+                    }
+                }
             }
         }
-        
-        previousX = e.clientX;
-        previousY = e.clientY;
     });
 
-    window.addEventListener('pointerup', () => {
+    window.addEventListener('pointerup', (e) => {
+        if (!isDragging) return;
         isDragging = false;
-        setTimeout(() => { if (!isDragging) isInteracting = false; }, 2000);
+        
+        // If it was a short click, select the mesh
+        if (dragDistance < 5) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(meshes);
+            if (intersects.length > 0) {
+                selectMesh(intersects[0].object);
+            } else {
+                deselectAll();
+                isInteracting = false;
+            }
+        } else {
+            setTimeout(() => { if (!isDragging && !selectedMesh) isInteracting = false; }, 500);
+        }
+    });
+    
+    renderer.domElement.addEventListener('pointerleave', () => {
+        if(selectedMesh) {
+            deselectAll();
+            isInteracting = false;
+        }
     });
     
     window.addEventListener('pointerleave', () => {
@@ -358,7 +369,7 @@ function init3DCarousel() {
                 velocity *= 0.94; // friction
                 globeGroup.rotation.y += velocity;
             } else {
-                globeGroup.rotation.y -= autoRotateSpeed;
+                globeGroup.rotation.y += autoRotateSpeed * autoRotateDirection;
             }
         } else if (!isDragging && Math.abs(velocity) > 0) {
             velocity *= 0.94;
@@ -402,13 +413,6 @@ function init3DCarousel() {
 
         renderer.render(scene, camera);
     }
-
-    // Start with front mesh highlighted
-    setTimeout(() => {
-        if (meshes.length > 0 && !isInteracting) {
-            selectMesh(meshes[0]);
-        }
-    }, 1000);
 
     animate();
 }
