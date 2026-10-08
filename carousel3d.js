@@ -131,10 +131,11 @@ function init3DCarousel() {
     // Decrease the spacing multiplier (0.50 instead of 0.65) to bring pictures closer
     const radius = Math.max(4.0, displayData.length * 0.50);
     
-    // Update camera to always be comfortably outside the globe, regardless of how many photos exist!
-    let baseCameraZ = radius + 5.5;
+    // Update camera to always be comfortably outside the globe
+    // Increased the distance to shrink the overall size of the globe
+    let baseCameraZ = radius + 9.5; 
     if(window.innerWidth < 768) {
-        baseCameraZ = radius + 9.5; // Step back further on mobile
+        baseCameraZ = radius + 15.0; // Step back even further on mobile
     }
     camera.position.z = baseCameraZ;
     
