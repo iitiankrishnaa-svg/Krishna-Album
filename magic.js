@@ -2,42 +2,59 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Check for Reduced Motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
-    // 2. 3D Tilt Cards
-    const cards = document.querySelectorAll('.magic-card');
+    // 2. 3D Interactive Cubes
+    const cubes = document.querySelectorAll('.magic-cube-container');
     
-    cards.forEach(card => {
-        // Only apply tilt if reduced motion is false and on non-touch devices ideally, 
-        // but pointer events handle both gracefully.
-        if (!prefersReducedMotion) {
-            card.addEventListener('pointermove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left; // x position within the element
-                const y = e.clientY - rect.top;  // y position within the element
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                // Calculate tilt (max 8 degrees)
-                const rotateX = ((y - centerY) / centerY) * -8;
-                const rotateY = ((x - centerX) / centerX) * 8;
-                
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-                
-                // Update glow position
-                const glow = card.querySelector('.magic-card-glow');
-                if(glow) {
-                    // center glow on pointer
-                    glow.style.transform = `translate(${x - 150}px, ${y - 150}px)`; // 150 is half the width/height of glow
-                    glow.style.opacity = '1';
-                }
-            });
+    cubes.forEach((cube, index) => {
+        let isDragging = false;
+        let startX, startY;
+        
+        // Give each cube a slightly different initial rotation to look natural
+        let currentX = 25 + (index * 15);
+        let currentY = -15 - (index * 5);
+        let targetX = currentX;
+        let targetY = currentY;
+        
+        cube.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+        
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
             
-            card.addEventListener('pointerleave', () => {
-                card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)`;
-                const glow = card.querySelector('.magic-card-glow');
-                if(glow) glow.style.opacity = '0';
-            });
+            targetX += dx * 0.4;
+            targetY -= dy * 0.4; // inverted for natural drag feel
+            
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+        
+        window.addEventListener('pointerup', () => {
+            isDragging = false;
+        });
+        
+        function animateCube() {
+            if (!prefersReducedMotion) {
+                // Auto spin slowly when not dragging
+                if (!isDragging) {
+                    targetX += 0.15;
+                    targetY += 0.05;
+                }
+            }
+            
+            // Smooth lerp interpolation
+            currentX += (targetX - currentX) * 0.1;
+            currentY += (targetY - currentY) * 0.1;
+            
+            cube.style.transform = `rotateX(${currentY}deg) rotateY(${currentX}deg)`;
+            requestAnimationFrame(animateCube);
         }
+        
+        animateCube();
     });
 
     // 3. Interactive Canvas Background
