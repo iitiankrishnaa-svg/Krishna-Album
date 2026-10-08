@@ -159,6 +159,9 @@ function init3DCarousel() {
                 // Create geometry maintaining aspect ratio, max height 3.5
                 mesh.geometry = new THREE.PlaneGeometry(3.5 * aspect, 3.5);
                 
+                texture.generateMipmaps = true;
+                texture.minFilter = THREE.LinearMipmapLinearFilter;
+                
                 material.map = texture;
                 material.needsUpdate = true;
                 
@@ -207,10 +210,11 @@ function init3DCarousel() {
     }
 
     function deselectAll() {
-        meshes.forEach(m => {
-            gsap.to(m.scale, { x: 1, y: 1, z: 1, duration: 0.4 });
-            gsap.to(m.material.emissive, { r: 0, g: 0, b: 0, duration: 0.4 });
-        });
+        if (!selectedMesh) return; // HUGE OPTIMIZATION: Prevent creating hundreds of GSAP tweens if nothing is actively selected
+        
+        gsap.to(selectedMesh.scale, { x: 1, y: 1, z: 1, duration: 0.4 });
+        gsap.to(selectedMesh.material.emissive, { r: 0, g: 0, b: 0, duration: 0.4 });
+        
         selectedMesh = null;
         updateOverlay(null);
     }
@@ -325,6 +329,8 @@ function init3DCarousel() {
     // Initial resize trigger
     window.dispatchEvent(new Event('resize'));
 
+    const tempVector = new THREE.Vector3();
+
     // Main Loop
     function animate() {
         requestAnimationFrame(animate);
@@ -341,7 +347,7 @@ function init3DCarousel() {
             globeGroup.rotation.y += velocity;
         }
 
-        const time = Date.now() * 0.001;
+        const time = performance.now() * 0.001;
         meshes.forEach((mesh, i) => {
             // Gentle floating effect
             if (mesh !== selectedMesh) {
@@ -350,18 +356,21 @@ function init3DCarousel() {
                 mesh.position.y = THREE.MathUtils.lerp(mesh.position.y, 0, 0.1);
             }
             
-            // Depth fading
-            const vector = new THREE.Vector3();
-            mesh.getWorldPosition(vector);
+            // Depth fading (re-using single vector to prevent GC spikes)
+            mesh.getWorldPosition(tempVector);
             
             let depthOpacity = 1.0;
-            if (vector.z < 0) {
+            if (tempVector.z < 0) {
                 // Image is moving to the back hemisphere
-                depthOpacity = 1.0 - (Math.abs(vector.z) / radius) * 0.6; // dims back images
+                depthOpacity = 1.0 - (Math.abs(tempVector.z) / radius) * 0.6; // dims back images
             }
             
             if (mesh.material.map && mesh.material.opacity > 0.1) {
-                mesh.material.opacity = THREE.MathUtils.lerp(mesh.material.opacity, depthOpacity, 0.1);
+                // Avoid redundant assignments if closely matching
+                const diff = Math.abs(mesh.material.opacity - depthOpacity);
+                if(diff > 0.01) {
+                    mesh.material.opacity = THREE.MathUtils.lerp(mesh.material.opacity, depthOpacity, 0.1);
+                }
             }
         });
 
