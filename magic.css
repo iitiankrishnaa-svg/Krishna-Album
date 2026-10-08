@@ -34,6 +34,15 @@
     font-family: 'Playfair Display', serif;
     letter-spacing: 0.1em;
     margin-bottom: 60px;
+    text-align: center;
+    font-weight: 800;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.magic-title span {
+    display: inline-block;
     background: linear-gradient(90deg, #ff758c 0%, #ff7eb3 20%, #fff 50%, #ff7eb3 80%, #ff758c 100%);
     background-size: 200% auto;
     color: transparent;
@@ -41,36 +50,45 @@
     background-clip: text;
     animation: shineText 6s linear infinite;
     text-shadow: 0 0 30px rgba(255, 118, 150, 0.2);
-    text-align: center;
-    font-weight: 800;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: crosshair;
 }
 
-.magic-title span {
-    display: inline-block;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), text-shadow 0.4s ease, color 0.4s ease;
-    cursor: default;
-}
-
-/* Individual letter neon glows on hover */
+/* Individual letter hover glows */
 .magic-title span:nth-child(1):hover {
-    transform: scale(1.3) translateY(-10px);
-    text-shadow: 0 0 20px #ff4b6a, 0 0 40px #ff4b6a, 0 0 60px #ff4b6a;
+    color: #00e5ff;
+    background: none;
+    -webkit-text-fill-color: #00e5ff;
+    text-shadow: 0 0 15px #00e5ff, 0 0 30px #00e5ff, 0 0 45px #00e5ff;
+    transform: scale(1.15) translateY(-10px) rotate(-5deg);
 }
 .magic-title span:nth-child(2):hover {
-    transform: scale(1.3) translateY(-10px);
-    text-shadow: 0 0 20px #9d4edd, 0 0 40px #9d4edd, 0 0 60px #9d4edd;
+    color: #ff00ff;
+    background: none;
+    -webkit-text-fill-color: #ff00ff;
+    text-shadow: 0 0 15px #ff00ff, 0 0 30px #ff00ff, 0 0 45px #ff00ff;
+    transform: scale(1.15) translateY(-10px) rotate(3deg);
 }
 .magic-title span:nth-child(3):hover {
-    transform: scale(1.3) translateY(-10px);
-    text-shadow: 0 0 20px #00f5d4, 0 0 40px #00f5d4, 0 0 60px #00f5d4;
+    color: #ffff00;
+    background: none;
+    -webkit-text-fill-color: #ffff00;
+    text-shadow: 0 0 15px #ffff00, 0 0 30px #ffff00, 0 0 45px #ffff00;
+    transform: scale(1.15) translateY(-10px) rotate(-3deg);
 }
 .magic-title span:nth-child(4):hover {
-    transform: scale(1.3) translateY(-10px);
-    text-shadow: 0 0 20px #fee440, 0 0 40px #fee440, 0 0 60px #fee440;
+    color: #00ff66;
+    background: none;
+    -webkit-text-fill-color: #00ff66;
+    text-shadow: 0 0 15px #00ff66, 0 0 30px #00ff66, 0 0 45px #00ff66;
+    transform: scale(1.15) translateY(-10px) rotate(5deg);
 }
 .magic-title span:nth-child(5):hover {
-    transform: scale(1.3) translateY(-10px);
-    text-shadow: 0 0 20px #f15bb5, 0 0 40px #f15bb5, 0 0 60px #f15bb5;
+    color: #ff5500;
+    background: none;
+    -webkit-text-fill-color: #ff5500;
+    text-shadow: 0 0 15px #ff5500, 0 0 30px #ff5500, 0 0 45px #ff5500;
+    transform: scale(1.15) translateY(-10px) rotate(-4deg);
 }
 
 @keyframes shineText {

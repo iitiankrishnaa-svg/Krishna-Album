@@ -79,14 +79,14 @@ function initMagicCanvas() {
 
     // Physics & Visual Configuration
     const config = {
-        influenceRadius: 280,   
-        baseSpring: 0.003,      // Lower spring = very slow, lazy, realistic return to base
-        friction: 0.94,         // Higher friction = longer, floatier gliding after scatter
-        maxAttraction: 0.05,    
-        minAttraction: 0.002,   
-        connectionDist: 140,    
-        lineColor: '255, 118, 150', 
-        maxSpeed: 60            
+        influenceRadius: 350,   // Wider reach for more organic scattering
+        baseSpring: 0.0025,     // Much slower, gentler return to home position
+        friction: 0.92,         // Less friction so they glide smoothly and settle realistically
+        maxAttraction: 0.035,   // Soft magnetic pull
+        minAttraction: 0.005,   // Weak pull when fast
+        connectionDist: 140,    // Maximum distance for drawing web lines
+        lineColor: '255, 118, 150', // Pinkish theme
+        maxSpeed: 60            // Speed threshold for interpolation
     };
 
     function resize() {
