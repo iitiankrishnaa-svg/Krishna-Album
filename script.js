@@ -1019,10 +1019,18 @@ const magicParticles = ['❤️', '💖', '✨', '⭐', '💝', '🌟', '💗'];
 let lastCursorX = 0;
 let lastCursorY = 0;
 
+let lastParticleTime = 0;
+
 function createMagicParticle(x, y) {
-    const dist = Math.hypot(x - lastCursorX, y - lastCursorY);
-    if (dist < 15) return;
+    const now = Date.now();
+    // Max 20 particles per second (every 50ms)
+    if (now - lastParticleTime < 50) return;
     
+    const dist = Math.hypot(x - lastCursorX, y - lastCursorY);
+    // Only spawn if mouse moved a decent amount
+    if (dist < 40) return;
+    
+    lastParticleTime = now;
     lastCursorX = x;
     lastCursorY = y;
     
@@ -1030,27 +1038,34 @@ function createMagicParticle(x, y) {
     particle.className = 'cursor-particle';
     particle.textContent = magicParticles[Math.floor(Math.random() * magicParticles.length)];
     
+    // Performance optimization: use transform instead of left/top if possible, but for absolute positioning left/top is okay if not animating them.
     const dx = (Math.random() - 0.5) * 100;
     particle.style.setProperty('--dx', `${dx}px`);
     particle.style.left = x + 'px';
     particle.style.top = y + 'px';
     
-    const size = 0.8 + Math.random() * 0.8;
+    // Make them smaller and fade faster
+    const size = 0.5 + Math.random() * 0.5;
     particle.style.fontSize = `${size}rem`;
+    // Hardware acceleration hint
+    particle.style.willChange = 'transform, opacity';
     
     document.body.appendChild(particle);
+    
+    // Remove faster to keep DOM clean (1.5s instead of 2.5s)
     setTimeout(() => {
-        particle.remove();
-    }, 2500);
+        if(particle.parentNode) particle.remove();
+    }, 1500);
 }
 
 document.addEventListener('mousemove', (e) => {
-    createMagicParticle(e.clientX, e.clientY);
+    // requestAnimationFrame ensures it runs optimally during the browser render cycle
+    requestAnimationFrame(() => createMagicParticle(e.clientX, e.clientY));
 });
 
 document.addEventListener('touchmove', (e) => {
     if (e.touches && e.touches[0]) {
-        createMagicParticle(e.touches[0].clientX, e.touches[0].clientY);
+        requestAnimationFrame(() => createMagicParticle(e.touches[0].clientX, e.touches[0].clientY));
     }
 }, {passive: true});
 // 13. Story Modal Logic
