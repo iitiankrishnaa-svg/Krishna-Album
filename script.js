@@ -684,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Using !important so DevTools inline edits on individual elements
         // still can't reveal content.
         s.textContent = `
-            body > *:not(#${OVERLAY_ID}) {
+            body > *:not(#${OVERLAY_ID}):not(#otp-modal) {
                 visibility: hidden !important;
                 pointer-events: none !important;
             }
@@ -857,6 +857,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     verifyOtpBtn.disabled = false;
                 }
             });
+            
+            if (otpCodeInput) {
+                otpCodeInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        verifyOtpBtn.click();
+                    }
+                });
+            }
         }
 
         if (closeOtp) closeOtp.addEventListener('click', () => {
