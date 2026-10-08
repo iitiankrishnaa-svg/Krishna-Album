@@ -1084,18 +1084,56 @@ const readMoreBtns = document.querySelectorAll('.read-more');
 
 if (readMoreBtns.length > 0 && storyModal) {
     readMoreBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.blog-card');
-            const imgSrc = card.querySelector('.blog-img img').src;
-            const title = card.querySelector('h3').innerText;
-            const fullStory = card.getAttribute('data-full-story');
-            
-            document.getElementById('story-modal-img').src = imgSrc;
-            document.getElementById('story-modal-title').innerText = title;
-            document.getElementById('story-modal-full-text').innerText = fullStory;
-            
-            storyModal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+        btn.addEventListener('click', async (e) => {
+            const btnEl = e.currentTarget;
+            const urlToDelete = btnEl.getAttribute('data-url');
+            if(confirm('Are you sure you want to delete this picture? It will be removed globally from all devices.')) {
+                
+                // Show loading state
+                const originalHtml = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting globally...';
+                btnEl.style.opacity = '0.7';
+                btnEl.disabled = true;
+
+                // 1. Mark globally as deleted
+                try {
+                    const parts = urlToDelete.split('/');
+                    const filenameWithExt = parts[parts.length - 1];
+                    const publicId = filenameWithExt.split('.')[0];
+                    if (publicId) {
+                        const formData = new FormData();
+                        formData.append('file', new Blob(['deleted'], {type: 'text/plain'}));
+                        formData.append('upload_preset', typeof CLOUDINARY_UPLOAD_PRESET !== 'undefined' ? CLOUDINARY_UPLOAD_PRESET : 'nisha_upload');
+                        formData.append('public_id', 'deleted_' + publicId);
+                        formData.append('tags', 'nk_deleted_marker');
+                        await fetch('https://api.cloudinary.com/v1_1/dvlxnbn7c/raw/upload', {
+                            method: 'POST', body: formData
+                        });
+                    }
+                } catch(err) {
+                    console.log('Global delete failed:', err);
+                }
+
+                // 2. Local cleanup
+                let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
+                if (!hiddenUrls.includes(urlToDelete)) {
+                    hiddenUrls.push(urlToDelete);
+                    localStorage.setItem('nisha_hidden_urls', JSON.stringify(hiddenUrls));
+                }
+                
+                let curUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+                curUpdates = curUpdates.filter(u => u.url !== urlToDelete);
+                localStorage.setItem('nisha_updates', JSON.stringify(curUpdates));
+                updatesList = curUpdates;
+                
+                let curVideos = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+                curVideos = curVideos.filter(v => v.url !== urlToDelete);
+                localStorage.setItem('nisha_videos', JSON.stringify(curVideos));
+                
+                renderSettingsGrid();
+                if(typeof renderUpdates === 'function') renderUpdates();
+                if(typeof renderUploadedVideos === 'function') renderUploadedVideos();
+            }
         });
     });
 
@@ -1540,6 +1578,17 @@ let updatesList = JSON.parse(localStorage.getItem('nisha_updates')) || [];
 // --- Global Sync Images ---
 async function syncGlobalUpdates() {
     try {
+        let globallyDeleted = new Set();
+        try {
+            const delRes = await fetch('https://res.cloudinary.com/dvlxnbn7c/raw/list/nk_deleted_marker.json');
+            if (delRes.ok) {
+                const delData = await delRes.json();
+                delData.resources.forEach(r => {
+                    if (r.public_id.startsWith('deleted_')) globallyDeleted.add(r.public_id.replace('deleted_', ''));
+                });
+            }
+        } catch(e) {}
+
         const res = await fetch('https://res.cloudinary.com/dvlxnbn7c/image/list/nk_global_updates.json');
         if (res.ok) {
             const data = await res.json();
@@ -1547,13 +1596,17 @@ async function syncGlobalUpdates() {
             let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
             
             data.resources.forEach(r => {
+                if (globallyDeleted.has(r.public_id)) return;
                 const url = `https://res.cloudinary.com/dvlxnbn7c/image/upload/v${r.version}/${r.public_id}.${r.format}`;
                 if (!hiddenUrls.includes(url) && !currentUpdates.some(u => u.url === url)) {
                     currentUpdates.push({ url: url, caption: '', date: r.created_at });
                 }
             });
-            // Also filter existing local updates just in case
             currentUpdates = currentUpdates.filter(u => !hiddenUrls.includes(u.url));
+            currentUpdates = currentUpdates.filter(u => {
+                const pid = u.url.split('/').pop().split('.')[0];
+                return !globallyDeleted.has(pid);
+            });
             currentUpdates.sort((a, b) => new Date(b.date) - new Date(a.date));
             updatesList = currentUpdates;
             localStorage.setItem('nisha_updates', JSON.stringify(updatesList));
@@ -1618,110 +1671,165 @@ function renderUpdates() {
 
     // Handle Delete clicks
     document.querySelectorAll('.delete-update-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const index = e.currentTarget.getAttribute('data-index');
-            const updateItem = updatesList[index];
-            
-            const deleteModal = document.getElementById('delete-modal');
-            const confirmBtn = document.getElementById('confirm-delete-btn');
-            const cancelBtn = document.getElementById('cancel-delete-btn');
-            
-            if (deleteModal) {
-                deleteModal.classList.add('active');
+        btn.addEventListener('click', async (e) => {
+            const btnEl = e.currentTarget;
+            const urlToDelete = btnEl.getAttribute('data-url');
+            if(confirm('Are you sure you want to delete this picture? It will be removed globally from all devices.')) {
                 
-                // Remove previous event listeners
-                const newConfirmBtn = confirmBtn.cloneNode(true);
-                const newCancelBtn = cancelBtn.cloneNode(true);
-                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-                
-                newCancelBtn.addEventListener('click', () => {
-                    deleteModal.classList.remove('active');
-                });
-                
-                newConfirmBtn.addEventListener('click', () => {
-                    deleteModal.classList.remove('active');
-                    // Remove from updates list
-                    updatesList.splice(index, 1);
-                    localStorage.setItem('nisha_updates', JSON.stringify(updatesList));
-                    
-                    // Remove from album additions automatically
-                    let albumAdditions = JSON.parse(localStorage.getItem('nisha_album_additions')) || [];
-                    const initialLength = albumAdditions.length;
-                    albumAdditions = albumAdditions.filter(item => item.url !== updateItem.url);
-                    if (albumAdditions.length !== initialLength) {
-                        localStorage.setItem('nisha_album_additions', JSON.stringify(albumAdditions));
+                // Show loading state
+                const originalHtml = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting globally...';
+                btnEl.style.opacity = '0.7';
+                btnEl.disabled = true;
+
+                // 1. Mark globally as deleted
+                try {
+                    const parts = urlToDelete.split('/');
+                    const filenameWithExt = parts[parts.length - 1];
+                    const publicId = filenameWithExt.split('.')[0];
+                    if (publicId) {
+                        const formData = new FormData();
+                        formData.append('file', new Blob(['deleted'], {type: 'text/plain'}));
+                        formData.append('upload_preset', typeof CLOUDINARY_UPLOAD_PRESET !== 'undefined' ? CLOUDINARY_UPLOAD_PRESET : 'nisha_upload');
+                        formData.append('public_id', 'deleted_' + publicId);
+                        formData.append('tags', 'nk_deleted_marker');
+                        await fetch('https://api.cloudinary.com/v1_1/dvlxnbn7c/raw/upload', {
+                            method: 'POST', body: formData
+                        });
                     }
-                    
-                    // Re-render automatically
-                    renderUpdates();
-                });
+                } catch(err) {
+                    console.log('Global delete failed:', err);
+                }
+
+                // 2. Local cleanup
+                let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
+                if (!hiddenUrls.includes(urlToDelete)) {
+                    hiddenUrls.push(urlToDelete);
+                    localStorage.setItem('nisha_hidden_urls', JSON.stringify(hiddenUrls));
+                }
+                
+                let curUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+                curUpdates = curUpdates.filter(u => u.url !== urlToDelete);
+                localStorage.setItem('nisha_updates', JSON.stringify(curUpdates));
+                updatesList = curUpdates;
+                
+                let curVideos = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+                curVideos = curVideos.filter(v => v.url !== urlToDelete);
+                localStorage.setItem('nisha_videos', JSON.stringify(curVideos));
+                
+                renderSettingsGrid();
+                if(typeof renderUpdates === 'function') renderUpdates();
+                if(typeof renderUploadedVideos === 'function') renderUploadedVideos();
             }
         });
     });
 
     // Handle "Add to Album" clicks
     document.querySelectorAll('.add-to-album-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const index = e.currentTarget.getAttribute('data-index');
-            const updateItem = updatesList[index];
-            
-            let albumAdditions = JSON.parse(localStorage.getItem('nisha_album_additions')) || [];
-            
-            // Avoid exact duplicates
-            if (!albumAdditions.find(item => item.url === updateItem.url)) {
-                albumAdditions.push({
-                    url: updateItem.url,
-                    caption: updateItem.caption,
-                    date: updateItem.date
-                });
-                localStorage.setItem('nisha_album_additions', JSON.stringify(albumAdditions));
+        btn.addEventListener('click', async (e) => {
+            const btnEl = e.currentTarget;
+            const urlToDelete = btnEl.getAttribute('data-url');
+            if(confirm('Are you sure you want to delete this picture? It will be removed globally from all devices.')) {
                 
-                // Show floating hearts & toast
-                const icon = e.currentTarget.querySelector('i');
-                icon.className = 'fas fa-check text-green';
-                e.currentTarget.innerHTML = '<i class="fas fa-check"></i> Added!';
-                e.currentTarget.style.background = '#4CAF50';
-                e.currentTarget.style.boxShadow = '0 0 10px #4CAF50';
+                // Show loading state
+                const originalHtml = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting globally...';
+                btnEl.style.opacity = '0.7';
+                btnEl.disabled = true;
+
+                // 1. Mark globally as deleted
+                try {
+                    const parts = urlToDelete.split('/');
+                    const filenameWithExt = parts[parts.length - 1];
+                    const publicId = filenameWithExt.split('.')[0];
+                    if (publicId) {
+                        const formData = new FormData();
+                        formData.append('file', new Blob(['deleted'], {type: 'text/plain'}));
+                        formData.append('upload_preset', typeof CLOUDINARY_UPLOAD_PRESET !== 'undefined' ? CLOUDINARY_UPLOAD_PRESET : 'nisha_upload');
+                        formData.append('public_id', 'deleted_' + publicId);
+                        formData.append('tags', 'nk_deleted_marker');
+                        await fetch('https://api.cloudinary.com/v1_1/dvlxnbn7c/raw/upload', {
+                            method: 'POST', body: formData
+                        });
+                    }
+                } catch(err) {
+                    console.log('Global delete failed:', err);
+                }
+
+                // 2. Local cleanup
+                let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
+                if (!hiddenUrls.includes(urlToDelete)) {
+                    hiddenUrls.push(urlToDelete);
+                    localStorage.setItem('nisha_hidden_urls', JSON.stringify(hiddenUrls));
+                }
                 
-                setTimeout(() => {
-                    renderUpdates();
-                }, 1000);
+                let curUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+                curUpdates = curUpdates.filter(u => u.url !== urlToDelete);
+                localStorage.setItem('nisha_updates', JSON.stringify(curUpdates));
+                updatesList = curUpdates;
+                
+                let curVideos = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+                curVideos = curVideos.filter(v => v.url !== urlToDelete);
+                localStorage.setItem('nisha_videos', JSON.stringify(curVideos));
+                
+                renderSettingsGrid();
+                if(typeof renderUpdates === 'function') renderUpdates();
+                if(typeof renderUploadedVideos === 'function') renderUploadedVideos();
             }
         });
     });
 
     // Handle "Remove from Album" clicks
     document.querySelectorAll('.remove-from-album-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const index = e.currentTarget.getAttribute('data-index');
-            const updateItem = updatesList[index];
-            
-            const removeModal = document.getElementById('remove-album-modal');
-            const confirmBtn = document.getElementById('confirm-remove-album-btn');
-            const cancelBtn = document.getElementById('cancel-remove-album-btn');
-            
-            if (removeModal) {
-                removeModal.classList.add('active');
+        btn.addEventListener('click', async (e) => {
+            const btnEl = e.currentTarget;
+            const urlToDelete = btnEl.getAttribute('data-url');
+            if(confirm('Are you sure you want to delete this picture? It will be removed globally from all devices.')) {
                 
-                const newConfirmBtn = confirmBtn.cloneNode(true);
-                const newCancelBtn = cancelBtn.cloneNode(true);
-                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                // Show loading state
+                const originalHtml = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting globally...';
+                btnEl.style.opacity = '0.7';
+                btnEl.disabled = true;
+
+                // 1. Mark globally as deleted
+                try {
+                    const parts = urlToDelete.split('/');
+                    const filenameWithExt = parts[parts.length - 1];
+                    const publicId = filenameWithExt.split('.')[0];
+                    if (publicId) {
+                        const formData = new FormData();
+                        formData.append('file', new Blob(['deleted'], {type: 'text/plain'}));
+                        formData.append('upload_preset', typeof CLOUDINARY_UPLOAD_PRESET !== 'undefined' ? CLOUDINARY_UPLOAD_PRESET : 'nisha_upload');
+                        formData.append('public_id', 'deleted_' + publicId);
+                        formData.append('tags', 'nk_deleted_marker');
+                        await fetch('https://api.cloudinary.com/v1_1/dvlxnbn7c/raw/upload', {
+                            method: 'POST', body: formData
+                        });
+                    }
+                } catch(err) {
+                    console.log('Global delete failed:', err);
+                }
+
+                // 2. Local cleanup
+                let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
+                if (!hiddenUrls.includes(urlToDelete)) {
+                    hiddenUrls.push(urlToDelete);
+                    localStorage.setItem('nisha_hidden_urls', JSON.stringify(hiddenUrls));
+                }
                 
-                newCancelBtn.addEventListener('click', () => {
-                    removeModal.classList.remove('active');
-                });
+                let curUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+                curUpdates = curUpdates.filter(u => u.url !== urlToDelete);
+                localStorage.setItem('nisha_updates', JSON.stringify(curUpdates));
+                updatesList = curUpdates;
                 
-                newConfirmBtn.addEventListener('click', () => {
-                    removeModal.classList.remove('active');
-                    
-                    let albumAdditions = JSON.parse(localStorage.getItem('nisha_album_additions')) || [];
-                    albumAdditions = albumAdditions.filter(item => item.url !== updateItem.url);
-                    localStorage.setItem('nisha_album_additions', JSON.stringify(albumAdditions));
-                    
-                    renderUpdates();
-                });
+                let curVideos = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+                curVideos = curVideos.filter(v => v.url !== urlToDelete);
+                localStorage.setItem('nisha_videos', JSON.stringify(curVideos));
+                
+                renderSettingsGrid();
+                if(typeof renderUpdates === 'function') renderUpdates();
+                if(typeof renderUploadedVideos === 'function') renderUploadedVideos();
             }
         });
     });
@@ -2015,30 +2123,56 @@ function renderUploadedVideos() {
 
     // Handle delete button clicks
     document.querySelectorAll('.nk-video-delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const index = parseInt(btn.getAttribute('data-index'));
-            const modal = document.getElementById('delete-video-modal');
-            if (!modal) return;
+        btn.addEventListener('click', async (e) => {
+            const btnEl = e.currentTarget;
+            const urlToDelete = btnEl.getAttribute('data-url');
+            if(confirm('Are you sure you want to delete this picture? It will be removed globally from all devices.')) {
+                
+                // Show loading state
+                const originalHtml = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting globally...';
+                btnEl.style.opacity = '0.7';
+                btnEl.disabled = true;
 
-            modal.classList.add('active');
-            const confirmBtn = modal.querySelector('#confirm-delete-video-btn');
-            const cancelBtn  = modal.querySelector('#cancel-delete-video-btn');
+                // 1. Mark globally as deleted
+                try {
+                    const parts = urlToDelete.split('/');
+                    const filenameWithExt = parts[parts.length - 1];
+                    const publicId = filenameWithExt.split('.')[0];
+                    if (publicId) {
+                        const formData = new FormData();
+                        formData.append('file', new Blob(['deleted'], {type: 'text/plain'}));
+                        formData.append('upload_preset', typeof CLOUDINARY_UPLOAD_PRESET !== 'undefined' ? CLOUDINARY_UPLOAD_PRESET : 'nisha_upload');
+                        formData.append('public_id', 'deleted_' + publicId);
+                        formData.append('tags', 'nk_deleted_marker');
+                        await fetch('https://api.cloudinary.com/v1_1/dvlxnbn7c/raw/upload', {
+                            method: 'POST', body: formData
+                        });
+                    }
+                } catch(err) {
+                    console.log('Global delete failed:', err);
+                }
 
-            // Clone to remove stale listeners
-            const newConfirm = confirmBtn.cloneNode(true);
-            const newCancel  = cancelBtn.cloneNode(true);
-            confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
-            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
-
-            newCancel.addEventListener('click',  () => modal.classList.remove('active'));
-            newConfirm.addEventListener('click', () => {
-                modal.classList.remove('active');
-                let videosList = JSON.parse(localStorage.getItem('nisha_videos')) || [];
-                videosList.splice(index, 1);
-                localStorage.setItem('nisha_videos', JSON.stringify(videosList));
-                renderUploadedVideos();
-            });
+                // 2. Local cleanup
+                let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
+                if (!hiddenUrls.includes(urlToDelete)) {
+                    hiddenUrls.push(urlToDelete);
+                    localStorage.setItem('nisha_hidden_urls', JSON.stringify(hiddenUrls));
+                }
+                
+                let curUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+                curUpdates = curUpdates.filter(u => u.url !== urlToDelete);
+                localStorage.setItem('nisha_updates', JSON.stringify(curUpdates));
+                updatesList = curUpdates;
+                
+                let curVideos = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+                curVideos = curVideos.filter(v => v.url !== urlToDelete);
+                localStorage.setItem('nisha_videos', JSON.stringify(curVideos));
+                
+                renderSettingsGrid();
+                if(typeof renderUpdates === 'function') renderUpdates();
+                if(typeof renderUploadedVideos === 'function') renderUploadedVideos();
+            }
         });
     });
 }
@@ -2046,6 +2180,17 @@ function renderUploadedVideos() {
 // --- Global Sync ---
 async function syncGlobalVideos() {
     try {
+        let globallyDeleted = new Set();
+        try {
+            const delRes = await fetch('https://res.cloudinary.com/dvlxnbn7c/raw/list/nk_deleted_marker.json');
+            if (delRes.ok) {
+                const delData = await delRes.json();
+                delData.resources.forEach(r => {
+                    if (r.public_id.startsWith('deleted_')) globallyDeleted.add(r.public_id.replace('deleted_', ''));
+                });
+            }
+        } catch(e) {}
+
         const res = await fetch('https://res.cloudinary.com/dvlxnbn7c/video/list/nk_global_videos.json');
         if (res.ok) {
             const data = await res.json();
@@ -2053,12 +2198,17 @@ async function syncGlobalVideos() {
             let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
             
             data.resources.forEach(r => {
+                if (globallyDeleted.has(r.public_id)) return;
                 const url = `https://res.cloudinary.com/dvlxnbn7c/video/upload/v${r.version}/${r.public_id}.${r.format}`;
                 if (!hiddenUrls.includes(url) && !videosList.some(v => v.url === url)) {
                     videosList.push({ url: url, caption: '', date: r.created_at });
                 }
             });
             videosList = videosList.filter(v => !hiddenUrls.includes(v.url));
+            videosList = videosList.filter(v => {
+                const pid = v.url.split('/').pop().split('.')[0];
+                return !globallyDeleted.has(pid);
+            });
             videosList.sort((a, b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('nisha_videos', JSON.stringify(videosList));
         }
@@ -2115,9 +2265,37 @@ function renderSettingsGrid() {
     });
     
     document.querySelectorAll('.delete-media-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const urlToDelete = e.currentTarget.getAttribute('data-url');
-            if(confirm('Are you sure you want to delete this picture?')) {
+        btn.addEventListener('click', async (e) => {
+            const btnEl = e.currentTarget;
+            const urlToDelete = btnEl.getAttribute('data-url');
+            if(confirm('Are you sure you want to delete this picture? It will be removed globally from all devices.')) {
+                
+                // Show loading state
+                const originalHtml = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting globally...';
+                btnEl.style.opacity = '0.7';
+                btnEl.disabled = true;
+
+                // 1. Mark globally as deleted
+                try {
+                    const parts = urlToDelete.split('/');
+                    const filenameWithExt = parts[parts.length - 1];
+                    const publicId = filenameWithExt.split('.')[0];
+                    if (publicId) {
+                        const formData = new FormData();
+                        formData.append('file', new Blob(['deleted'], {type: 'text/plain'}));
+                        formData.append('upload_preset', typeof CLOUDINARY_UPLOAD_PRESET !== 'undefined' ? CLOUDINARY_UPLOAD_PRESET : 'nisha_upload');
+                        formData.append('public_id', 'deleted_' + publicId);
+                        formData.append('tags', 'nk_deleted_marker');
+                        await fetch('https://api.cloudinary.com/v1_1/dvlxnbn7c/raw/upload', {
+                            method: 'POST', body: formData
+                        });
+                    }
+                } catch(err) {
+                    console.log('Global delete failed:', err);
+                }
+
+                // 2. Local cleanup
                 let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
                 if (!hiddenUrls.includes(urlToDelete)) {
                     hiddenUrls.push(urlToDelete);
