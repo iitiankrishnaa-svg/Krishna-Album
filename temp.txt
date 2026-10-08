@@ -1,0 +1,74 @@
+        <div class="password-card glass-card glowing-border">
+            <div style="background: rgba(255, 118, 150, 0.1); padding: 8px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; color: var(--deep-red); font-size: 0.9rem; letter-spacing: 1px;">
+                <i class="fas fa-magic"></i> Hint: Try 1 2 3 4 5 6 password
+            </div>
+            <h2 class="romantic-title" style="font-size: 2.8rem; margin-bottom: 5px;">Only For Us ❤️</h2>
+            <p style="color: var(--text-muted); font-weight: 500; font-size: 1.1rem; margin-bottom: 15px;">Please enter our special password</p>
+            <div class="password-input-group">
+                <input type="password" id="secret-password" placeholder="Enter Password...">
+                <button id="unlock-btn" class="glowing-btn"><i class="fas fa-key"></i> Unlock</button>
+            </div>
+
+            <div style="margin: 20px 0; color: var(--text-muted); font-size: 0.9rem; position: relative;">
+                <span style="background: white; padding: 0 10px; z-index: 1; position: relative;">OR</span>
+                <hr style="position: absolute; top: 50%; left: 0; right: 0; border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 0;">
+            </div>
+
+            <button id="get-otp-btn" class="otp-trigger-btn">
+                <i class="fas fa-mobile-alt"></i> Get OTP Access
+            </button>
+
+            <p id="password-error" class="password-error">Incorrect password, my love. Try again.</p>
+        </div>
+    </div>
+    <!-- Floating Hearts Container -->
+    <div id="hearts-container"></div>
+    
+    <!-- OTP Entry Modal -->
+    <div id="otp-modal" class="modal">
+        <div class="modal-content glass-card">
+            <span class="close-modal" id="close-otp">&times;</span>
+            <h2 class="otp-title romantic-title">OTP Verification</h2>
+            <p style="color: rgba(255,255,255,0.7);">Enter the 6-digit code sent to Krishna's phone.</p>
+            
+            <div class="otp-input-wrapper">
+                <input type="text" id="otp-code" maxlength="6" placeholder="0 0 0 0 0 0">
+                <button id="verify-otp-btn" class="glowing-btn">Verify & Unlock</button>
+            </div>
+            
+            <p id="otp-error" class="password-error" style="color: #ff5252;">Invalid OTP! Please try again.</p>
+        </div>
+    </div>
+    <div id="recaptcha-container"></div>
+
+    <!-- Temporary Session Timer -->
+    <div id="otp-timer" class="otp-timer-badge">
+        <i class="fas fa-clock"></i> Session: <span id="timer-countdown">05:00</span>
+    </div>
+    
+    <!-- Instagram Selection Modal -->
+    <div id="insta-modal" class="modal">
+        <div class="modal-content glass-card glowing-border">
+            <span class="close-modal" id="close-insta">&times;</span>
+            <h2 class="romantic-title" style="font-size: 2.8rem; margin-bottom: 5px;">Follow Our Lives</h2>
+            <p style="color: var(--text-muted); font-weight: 500;">Whose profile would you like to visit?</p>
+            <div class="insta-links">
+                <a href="https://www.instagram.com/er.nishakumari" target="_blank" class="insta-btn nisha-insta">
+                    <i class="fab fa-instagram"></i> Follow Nisha
+                </a>
+                <a href="https://www.instagram.com/kumar.krishna.patel/" target="_blank" class="insta-btn krishna-insta">
+                    <i class="fab fa-instagram"></i> Follow Krishna
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="glass-nav">
+        <div class="nav-brand">
+            <img src="assets/images/favicon.png" alt="Icon" class="brand-icon">
+            Nisha<span>Krishna</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html#home"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="moments.html#moments"><i class="fas fa-heart"></i> Moments</a></li>

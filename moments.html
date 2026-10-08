@@ -127,8 +127,10 @@
                 <p class="section-desc">Our most precious times recorded forever in our heart.</p>
             </div>
             
-            <div class="carousel-container">
-                <div class="carousel-track" id="carousel-track">
+            <div class="carousel-container" id="globe-carousel-container" style="position: relative; width: 100%; height: 70vh; max-height: 600px; min-height: 400px; overflow: hidden; background: transparent; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); touch-action: none;">
+                <!-- Hidden data source for ThreeJS -->
+                <div id="globe-data-source" style="display: none;">
+                    
                     <!-- Slides -->
                     <div class="carousel-slide current-slide">
                         <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTIxODA0ODg2X0hEUi5qcGc=" alt="Magical Evenings">
@@ -162,20 +164,19 @@
                             <p>Words are not enough to express my love.</p>
                         </div>
                     </div>
+                
                 </div>
                 
-                <button class="carousel-button carousel-button-left" id="carousel-left">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <button class="carousel-button carousel-button-right" id="carousel-right">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <!-- Overlay Text -->
+                <div id="globe-overlay-text" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); text-align: center; color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.9); pointer-events: none; z-index: 10; opacity: 0; transition: opacity 0.5s ease; width: 90%; max-width: 500px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; backdrop-filter: blur(5px);">
+                    <h3 id="globe-overlay-title" class="romantic-title" style="font-size: 2rem; margin-bottom: 5px; color: #fff;"></h3>
+                    <p id="globe-overlay-desc" style="font-size: 1.1rem; margin-bottom: 8px; font-weight: 500;"></p>
+                    <div id="globe-overlay-date" style="font-size: 0.85rem; background: rgba(255,107,143,0.8); padding: 4px 12px; border-radius: 20px; display: inline-block; font-weight: bold;"></div>
+                </div>
                 
-                <div class="carousel-nav" id="carousel-nav">
-                    <button class="carousel-indicator current-indicator"></button>
-                    <button class="carousel-indicator"></button>
-                    <button class="carousel-indicator"></button>
-                    <button class="carousel-indicator"></button>
+                <!-- Interaction Prompt -->
+                <div style="position: absolute; top: 15px; right: 20px; background: rgba(0,0,0,0.4); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; pointer-events: none; z-index: 5; backdrop-filter: blur(4px); display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-hand-pointer"></i> Drag to rotate globe
                 </div>
             </div>
         </div>
@@ -336,6 +337,12 @@
     </div>
     <!-- Chat Logic -->
     <script src="chat.js"></script>
+
+
+    <!-- ThreeJS and GSAP for 3D Globe Carousel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="carousel3d.js"></script>
 
 </body>
 </html>
