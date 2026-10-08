@@ -127,16 +127,14 @@ function initMagicCanvas() {
         }
     }
 
-    // Interaction Listeners (Listening on parent to catch events over the canvas)
-    const parent = canvas.parentElement;
-    parent.addEventListener('pointermove', (e) => {
-        const rect = parent.getBoundingClientRect();
-        mouse.x = e.clientX - rect.left;
-        mouse.y = e.clientY - rect.top;
+    // Interaction Listeners (Listening globally since canvas is fixed background)
+    window.addEventListener('pointermove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
         isTouching = true;
     }, {passive: true});
 
-    parent.addEventListener('pointerleave', () => {
+    document.documentElement.addEventListener('pointerleave', () => {
         isTouching = false;
         mouse.x = -1000;
         mouse.y = -1000;

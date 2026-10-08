@@ -4,10 +4,10 @@
     --primary-purple: #ff7eb3;
     --soft-pink: #fff0f5;
     --deep-red: #ff4b6a;
-    --glass-bg: rgba(255, 255, 255, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.4);
-    --text-main: #3d2f3b;
-    --text-muted: #6b5c68;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-main: #fdfbfb;
+    --text-muted: #e2d8e0;
     --shadow-soft: 0 8px 32px 0 rgba(255, 118, 150, 0.15);
     --shadow-strong: 0 12px 40px 0 rgba(255, 75, 106, 0.3);
     
@@ -30,21 +30,14 @@ html {
 body {
     font-family: var(--font-sans);
     color: var(--text-main);
-    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-    background-attachment: fixed;
+    background: transparent;
     overflow-x: hidden;
     position: relative;
 }
 
-/* Background gradient animation */
+/* Background gradient animation removed for new dark theme */
 body::before {
-    content: '';
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(120deg, rgba(255,192,203,0.3) 0%, rgba(255,240,245,0.7) 50%, rgba(255,182,193,0.4) 100%);
-    z-index: -2;
-    background-size: 200% 200%;
-    animation: gradientShift 15s ease infinite;
+    display: none;
 }
 
 @keyframes gradientShift {
@@ -90,7 +83,7 @@ ul {
 }
 
 .bg-soft {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
