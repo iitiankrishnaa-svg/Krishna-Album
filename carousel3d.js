@@ -106,12 +106,13 @@ function init3DCarousel() {
         }
     }
 
-    const radius = Math.max(3.5, displayData.length * 0.45);
+    // Increase radius calculation to give more breathing room between images
+    const radius = Math.max(5.0, displayData.length * 0.65);
     
     // Update camera to always be comfortably outside the globe, regardless of how many photos exist!
     let baseCameraZ = radius + 5.5;
     if(window.innerWidth < 768) {
-        baseCameraZ = radius + 8.5; // Step back further on mobile
+        baseCameraZ = radius + 9.5; // Step back further on mobile
     }
     camera.position.z = baseCameraZ;
     
@@ -155,9 +156,26 @@ function init3DCarousel() {
         if(data.src) {
             textureLoader.load(data.src, (texture) => {
                 const aspect = texture.image.width / texture.image.height;
+                
+                // Calculate maximum allowed width to prevent overlap
+                const arcLength = (2 * Math.PI * radius) / displayData.length;
+                let maxAllowedWidth = arcLength * 0.85; // Leave 15% gap
+                maxAllowedWidth = Math.min(maxAllowedWidth, 6.0); // Absolute max width cap
+                
+                const maxAllowedHeight = 3.5;
+                
+                // Keep exact aspect ratio
+                let targetW = maxAllowedHeight * aspect;
+                let targetH = maxAllowedHeight;
+                
+                // If it's a wide landscape image, scale it down proportionally to fit the safe width
+                if (targetW > maxAllowedWidth) {
+                    targetW = maxAllowedWidth;
+                    targetH = maxAllowedWidth / aspect;
+                }
+                
                 mesh.geometry.dispose();
-                // Create geometry maintaining aspect ratio, max height 3.5
-                mesh.geometry = new THREE.PlaneGeometry(3.5 * aspect, 3.5);
+                mesh.geometry = new THREE.PlaneGeometry(targetW, targetH);
                 
                 texture.generateMipmaps = true;
                 texture.minFilter = THREE.LinearMipmapLinearFilter;
