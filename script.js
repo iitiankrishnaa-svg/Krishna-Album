@@ -1608,46 +1608,12 @@ const uploadCaptionInput = document.getElementById('upload-caption');
 const submitUploadBtn = document.getElementById('submit-upload-btn');
 const uploadStatus = document.getElementById('upload-status');
 
-// --- Cloudinary Sync Data Helpers ---
-const CLD_RAW_URL = 'https://api.cloudinary.com/v1_1/dvlxnbn7c/raw/upload';
-
-async function fetchCloudJSON(filename, fallbackLocalKey) {
-    try {
-        const url = `https://res.cloudinary.com/dvlxnbn7c/raw/upload/${filename}.json?_v=${Date.now()}`;
-        const res = await fetch(url, { cache: 'no-store' });
-        if (res.status === 404) return [];
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        const arr = Array.isArray(data) ? data : [];
-        localStorage.setItem(fallbackLocalKey, JSON.stringify(arr));
-        return arr;
-    } catch {
-        return JSON.parse(localStorage.getItem(fallbackLocalKey)) || [];
-    }
-}
-
-async function saveCloudJSON(filename, data) {
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const fd = new FormData();
-    fd.append('file', blob, filename + '.json');
-    fd.append('public_id', filename);
-    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    fd.append('resource_type', 'raw');
-    fd.append('overwrite', 'true');
-    fd.append('invalidate', 'true');
-    const res = await fetch(CLD_RAW_URL, { method: 'POST', body: fd });
-    return await res.json();
-}
-
-// Load stored updates (starts with local cache to avoid visual lag, then fetches cloud)
+// Load stored updates (Newest first)
 let updatesList = JSON.parse(localStorage.getItem('nisha_updates')) || [];
 
-async function renderUpdates() {
+function renderUpdates() {
     if (!updateGrid) return;
     updateGrid.innerHTML = '';
-    
-    // Always fetch fresh list from cloud so it's synced across devices
-    updatesList = await fetchCloudJSON('nk_updates', 'nisha_updates');
     
     let albumAdditions = JSON.parse(localStorage.getItem('nisha_album_additions')) || [];
     
@@ -1719,20 +1685,19 @@ async function renderUpdates() {
                     deleteModal.classList.remove('active');
                 });
                 
-                newConfirmBtn.addEventListener('click', async () => {
+                newConfirmBtn.addEventListener('click', () => {
                     deleteModal.classList.remove('active');
-                    // Remove from updates list (optimistic local update)
-                    let currentUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
-                    currentUpdates.splice(index, 1);
-                    localStorage.setItem('nisha_updates', JSON.stringify(currentUpdates));
+                    // Remove from updates list
+                    updatesList.splice(index, 1);
+                    localStorage.setItem('nisha_updates', JSON.stringify(updatesList));
                     
                     // Remove from album additions automatically
                     let albumAdditions = JSON.parse(localStorage.getItem('nisha_album_additions')) || [];
+                    const initialLength = albumAdditions.length;
                     albumAdditions = albumAdditions.filter(item => item.url !== updateItem.url);
-                    localStorage.setItem('nisha_album_additions', JSON.stringify(albumAdditions));
-                    
-                    // Fire-and-forget sync to cloud
-                    saveCloudJSON('nk_updates', currentUpdates);
+                    if (albumAdditions.length !== initialLength) {
+                        localStorage.setItem('nisha_album_additions', JSON.stringify(albumAdditions));
+                    }
                     
                     // Re-render automatically
                     renderUpdates();
@@ -1948,26 +1913,23 @@ if (submitUploadBtn) {
 
                 if (isVideo) {
                     // Store in videos list
-                    let videosList = await fetchCloudJSON('nk_videos', 'nisha_videos');
+                    let videosList = JSON.parse(localStorage.getItem('nisha_videos')) || [];
                     videosList.unshift({
                         url: data.secure_url,
                         caption: caption,
                         date: new Date().toISOString()
                     });
                     localStorage.setItem('nisha_videos', JSON.stringify(videosList));
-                    await saveCloudJSON('nk_videos', videosList);
                     renderUploadedVideos();
                 } else {
                     // Store in updates list (images)
-                    let currentUpdates = await fetchCloudJSON('nk_updates', 'nisha_updates');
                     const newUpdate = {
                         url: data.secure_url,
                         caption: caption,
                         date: new Date().toISOString()
                     };
-                    currentUpdates.unshift(newUpdate);
-                    localStorage.setItem('nisha_updates', JSON.stringify(currentUpdates));
-                    await saveCloudJSON('nk_updates', currentUpdates);
+                    updatesList.unshift(newUpdate);
+                    localStorage.setItem('nisha_updates', JSON.stringify(updatesList));
                     renderUpdates();
                 }
 
@@ -1998,14 +1960,14 @@ if (submitUploadBtn) {
 }
 
 // --- Render Uploaded Videos (on videos.html) ---
-async function renderUploadedVideos() {
+function renderUploadedVideos() {
     const videoGrid = document.querySelector('.video-grid');
     if (!videoGrid) return;
 
-    // Remove previously rendered uploaded videos
+    // Remove previously rendered uploaded videos (those with class nk-uploaded-video)
     document.querySelectorAll('.nk-uploaded-video').forEach(el => el.remove());
 
-    const videosList = await fetchCloudJSON('nk_videos', 'nisha_videos');
+    const videosList = JSON.parse(localStorage.getItem('nisha_videos')) || [];
     const deleteVideoModal = document.getElementById('delete-video-modal');
 
     videosList.forEach((vid, index) => {
@@ -2111,17 +2073,11 @@ async function renderUploadedVideos() {
             cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
 
             newCancel.addEventListener('click',  () => modal.classList.remove('active'));
-            newConfirm.addEventListener('click', async () => {
+            newConfirm.addEventListener('click', () => {
                 modal.classList.remove('active');
-                
-                // Optimistic local delete
-                let currentVideos = JSON.parse(localStorage.getItem('nisha_videos')) || [];
-                currentVideos.splice(index, 1);
-                localStorage.setItem('nisha_videos', JSON.stringify(currentVideos));
-                
-                // Fire and forget cloud sync
-                saveCloudJSON('nk_videos', currentVideos);
-                
+                let videosList = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+                videosList.splice(index, 1);
+                localStorage.setItem('nisha_videos', JSON.stringify(videosList));
                 renderUploadedVideos();
             });
         });
