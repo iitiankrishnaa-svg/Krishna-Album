@@ -87,16 +87,38 @@ function init3DCarousel() {
     container.appendChild(renderer.domElement);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // Removed the point light that was causing the sun glare effect.
+    // Boosted AmbientLight to 1.0 for flat, even lighting.
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
     scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(0xffffff, 0.7, 30);
-    camera.add(pointLight); // Attach light to camera so front is always bright
     scene.add(camera);
 
     // 3. Create Globe Group
     const globeGroup = new THREE.Group();
     scene.add(globeGroup);
+    
+    // Create Neon Glow Mesh (Hidden by default)
+    const glowCanvas = document.createElement('canvas');
+    glowCanvas.width = 256;
+    glowCanvas.height = 256;
+    const glowCtx = glowCanvas.getContext('2d');
+    const glowGrad = glowCtx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    glowGrad.addColorStop(0, 'rgba(255, 70, 150, 0.8)');
+    glowGrad.addColorStop(0.5, 'rgba(255, 70, 150, 0.3)');
+    glowGrad.addColorStop(1, 'rgba(255, 70, 150, 0)');
+    glowCtx.fillStyle = glowGrad;
+    glowCtx.fillRect(0, 0, 256, 256);
+    
+    const glowTexture = new THREE.CanvasTexture(glowCanvas);
+    const glowMaterial = new THREE.MeshBasicMaterial({ 
+        map: glowTexture, 
+        transparent: true, 
+        blending: THREE.AdditiveBlending, 
+        opacity: 0,
+        depthWrite: false
+    });
+    const glowMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMaterial);
+    globeGroup.add(glowMesh);
 
     // Duplicate slides to ensure a lush, dense globe (at least 6-8 items)
     let displayData = [...slideData];
@@ -106,8 +128,8 @@ function init3DCarousel() {
         }
     }
 
-    // Increase radius calculation to give more breathing room between images
-    const radius = Math.max(5.0, displayData.length * 0.65);
+    // Decrease the spacing multiplier (0.50 instead of 0.65) to bring pictures closer
+    const radius = Math.max(4.0, displayData.length * 0.50);
     
     // Update camera to always be comfortably outside the globe, regardless of how many photos exist!
     let baseCameraZ = radius + 5.5;
@@ -126,8 +148,8 @@ function init3DCarousel() {
         
         const material = new THREE.MeshStandardMaterial({ 
             color: 0xffffff,
-            roughness: 0.3,
-            metalness: 0.2,
+            roughness: 1.0,  // Flat lighting
+            metalness: 0.0,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0,
@@ -159,7 +181,7 @@ function init3DCarousel() {
                 
                 // Calculate maximum allowed width to prevent overlap
                 const arcLength = (2 * Math.PI * radius) / displayData.length;
-                let maxAllowedWidth = arcLength * 0.85; // Leave 15% gap
+                let maxAllowedWidth = arcLength * 0.95; // Leave 5% gap (much closer)
                 maxAllowedWidth = Math.min(maxAllowedWidth, 6.0); // Absolute max width cap
                 
                 const maxAllowedHeight = 3.5;
@@ -212,6 +234,9 @@ function init3DCarousel() {
         gsap.to(selectedMesh.scale, { x: 1, y: 1, z: 1, duration: 0.4 });
         gsap.to(selectedMesh.material.emissive, { r: 0, g: 0, b: 0, duration: 0.4 });
         
+        // Hide neon glow
+        gsap.to(glowMesh.material, { opacity: 0, duration: 0.4 });
+        
         selectedMesh = null;
     }
 
@@ -222,7 +247,23 @@ function init3DCarousel() {
         
         // Premium subtle glow & pop scale
         gsap.to(mesh.scale, { x: 1.15, y: 1.15, z: 1.15, duration: 0.6, ease: "back.out(1.5)" });
-        gsap.to(mesh.material.emissive, { r: 0.15, g: 0.05, b: 0.1, duration: 0.6 });
+        // Only a tiny emissive so the photo isn't overly tinted
+        gsap.to(mesh.material.emissive, { r: 0.05, g: 0.0, b: 0.02, duration: 0.6 });
+        
+        // Position and show neon glow sprite directly behind the image
+        glowMesh.position.copy(mesh.position);
+        glowMesh.rotation.copy(mesh.rotation);
+        // Push slightly toward center so it's behind the image
+        const angle = mesh.userData.angle;
+        glowMesh.position.x = Math.sin(angle) * (radius - 0.2);
+        glowMesh.position.z = Math.cos(angle) * (radius - 0.2);
+        
+        // Scale glow based on image size
+        const imgW = mesh.geometry.parameters.width || 3.5;
+        const imgH = mesh.geometry.parameters.height || 3.5;
+        glowMesh.scale.set(imgW + 2.0, imgH + 2.0, 1);
+        
+        gsap.to(glowMesh.material, { opacity: 1, duration: 0.6 });
         
         // Calculate shortest path rotation to bring mesh to center
         let currentGroupRot = globeGroup.rotation.y % (Math.PI * 2);
