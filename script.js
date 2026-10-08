@@ -2071,3 +2071,73 @@ async function syncGlobalVideos() {
 
 // Initial render of uploaded videos if on videos page
 syncGlobalVideos();
+
+// --- Settings Page Logic ---
+function renderSettingsGrid() {
+    const settingsGrid = document.getElementById('settings-grid');
+    if (!settingsGrid) return;
+    
+    settingsGrid.innerHTML = '';
+    
+    const updates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+    const videos = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+    
+    const allMedia = [...updates.map(u => ({...u, type: 'image'})), ...videos.map(v => ({...v, type: 'video'}))];
+    allMedia.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (allMedia.length === 0) {
+        settingsGrid.innerHTML = '<p style="color: white; grid-column: 1/-1; text-align: center;">No uploaded pictures or videos found.</p>';
+        return;
+    }
+    
+    allMedia.forEach((media) => {
+        const item = document.createElement('div');
+        item.className = 'glass-card';
+        item.style.position = 'relative';
+        item.style.padding = '10px';
+        item.style.borderRadius = '15px';
+        item.style.overflow = 'hidden';
+        
+        let mediaHtml = '';
+        if (media.type === 'image') {
+            mediaHtml = `<img src="${media.url}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px;" alt="Uploaded pic">`;
+        } else {
+            mediaHtml = `<video src="${media.url}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px;" controls preload="metadata"></video>`;
+        }
+        
+        item.innerHTML = `
+            ${mediaHtml}
+            <button class="delete-media-btn glowing-btn" data-url="${media.url}" style="margin-top: 15px; width: 100%; background: #ff4b6a; border: none; border-radius: 8px; color: white; padding: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold;">
+                <i class="fas fa-trash-alt"></i> Delete Picture
+            </button>
+        `;
+        settingsGrid.appendChild(item);
+    });
+    
+    document.querySelectorAll('.delete-media-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const urlToDelete = e.currentTarget.getAttribute('data-url');
+            if(confirm('Are you sure you want to delete this picture?')) {
+                let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
+                if (!hiddenUrls.includes(urlToDelete)) {
+                    hiddenUrls.push(urlToDelete);
+                    localStorage.setItem('nisha_hidden_urls', JSON.stringify(hiddenUrls));
+                }
+                
+                let curUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+                curUpdates = curUpdates.filter(u => u.url !== urlToDelete);
+                localStorage.setItem('nisha_updates', JSON.stringify(curUpdates));
+                updatesList = curUpdates;
+                
+                let curVideos = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+                curVideos = curVideos.filter(v => v.url !== urlToDelete);
+                localStorage.setItem('nisha_videos', JSON.stringify(curVideos));
+                
+                renderSettingsGrid();
+                if(typeof renderUpdates === 'function') renderUpdates();
+                if(typeof renderUploadedVideos === 'function') renderUploadedVideos();
+            }
+        });
+    });
+}
+renderSettingsGrid();
