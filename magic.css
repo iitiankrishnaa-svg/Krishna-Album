@@ -45,6 +45,34 @@
     font-weight: 800;
 }
 
+.magic-title span {
+    display: inline-block;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), text-shadow 0.4s ease, color 0.4s ease;
+    cursor: default;
+}
+
+/* Individual letter neon glows on hover */
+.magic-title span:nth-child(1):hover {
+    transform: scale(1.3) translateY(-10px);
+    text-shadow: 0 0 20px #ff4b6a, 0 0 40px #ff4b6a, 0 0 60px #ff4b6a;
+}
+.magic-title span:nth-child(2):hover {
+    transform: scale(1.3) translateY(-10px);
+    text-shadow: 0 0 20px #9d4edd, 0 0 40px #9d4edd, 0 0 60px #9d4edd;
+}
+.magic-title span:nth-child(3):hover {
+    transform: scale(1.3) translateY(-10px);
+    text-shadow: 0 0 20px #00f5d4, 0 0 40px #00f5d4, 0 0 60px #00f5d4;
+}
+.magic-title span:nth-child(4):hover {
+    transform: scale(1.3) translateY(-10px);
+    text-shadow: 0 0 20px #fee440, 0 0 40px #fee440, 0 0 60px #fee440;
+}
+.magic-title span:nth-child(5):hover {
+    transform: scale(1.3) translateY(-10px);
+    text-shadow: 0 0 20px #f15bb5, 0 0 40px #f15bb5, 0 0 60px #f15bb5;
+}
+
 @keyframes shineText {
     to {
         background-position: 200% center;

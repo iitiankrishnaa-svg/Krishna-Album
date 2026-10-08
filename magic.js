@@ -79,14 +79,14 @@ function initMagicCanvas() {
 
     // Physics & Visual Configuration
     const config = {
-        influenceRadius: 280,   // How far the cursor magnetic field reaches
-        baseSpring: 0.008,      // How strongly particles want to return to their home position
-        friction: 0.82,         // Damping to prevent infinite oscillation
-        maxAttraction: 0.045,   // Magnetic pull strength when cursor is SLOW
-        minAttraction: 0.002,   // Magnetic pull strength when cursor is FAST
-        connectionDist: 140,    // Maximum distance for drawing web lines
-        lineColor: '255, 118, 150', // Pinkish theme
-        maxSpeed: 60            // Speed threshold for interpolation
+        influenceRadius: 280,   
+        baseSpring: 0.003,      // Lower spring = very slow, lazy, realistic return to base
+        friction: 0.94,         // Higher friction = longer, floatier gliding after scatter
+        maxAttraction: 0.05,    
+        minAttraction: 0.002,   
+        connectionDist: 140,    
+        lineColor: '255, 118, 150', 
+        maxSpeed: 60            
     };
 
     function resize() {
