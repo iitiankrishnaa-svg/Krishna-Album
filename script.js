@@ -1544,17 +1544,16 @@ async function syncGlobalUpdates() {
         if (res.ok) {
             const data = await res.json();
             let currentUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+            let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
             
             data.resources.forEach(r => {
                 const url = `https://res.cloudinary.com/dvlxnbn7c/image/upload/v${r.version}/${r.public_id}.${r.format}`;
-                if (!currentUpdates.some(u => u.url === url)) {
-                    currentUpdates.push({
-                        url: url,
-                        caption: '', 
-                        date: r.created_at
-                    });
+                if (!hiddenUrls.includes(url) && !currentUpdates.some(u => u.url === url)) {
+                    currentUpdates.push({ url: url, caption: '', date: r.created_at });
                 }
             });
+            // Also filter existing local updates just in case
+            currentUpdates = currentUpdates.filter(u => !hiddenUrls.includes(u.url));
             currentUpdates.sort((a, b) => new Date(b.date) - new Date(a.date));
             updatesList = currentUpdates;
             localStorage.setItem('nisha_updates', JSON.stringify(updatesList));
@@ -1563,6 +1562,7 @@ async function syncGlobalUpdates() {
         console.log("Global image sync failed:", e);
     }
     renderUpdates();
+    if(typeof renderSettingsGrid === 'function') renderSettingsGrid();
 }
 
 function renderUpdates() {
@@ -2050,17 +2050,15 @@ async function syncGlobalVideos() {
         if (res.ok) {
             const data = await res.json();
             let videosList = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+            let hiddenUrls = JSON.parse(localStorage.getItem('nisha_hidden_urls')) || [];
             
             data.resources.forEach(r => {
                 const url = `https://res.cloudinary.com/dvlxnbn7c/video/upload/v${r.version}/${r.public_id}.${r.format}`;
-                if (!videosList.some(v => v.url === url)) {
-                    videosList.push({
-                        url: url,
-                        caption: '', // Cloudinary list API doesn't easily expose tags/context without admin API
-                        date: r.created_at
-                    });
+                if (!hiddenUrls.includes(url) && !videosList.some(v => v.url === url)) {
+                    videosList.push({ url: url, caption: '', date: r.created_at });
                 }
             });
+            videosList = videosList.filter(v => !hiddenUrls.includes(v.url));
             videosList.sort((a, b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('nisha_videos', JSON.stringify(videosList));
         }
@@ -2068,6 +2066,7 @@ async function syncGlobalVideos() {
         console.log("Global sync failed:", e);
     }
     renderUploadedVideos();
+    if(typeof renderSettingsGrid === 'function') renderSettingsGrid();
 }
 
 // Initial render of uploaded videos if on videos page
