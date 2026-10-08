@@ -1537,6 +1537,34 @@ const uploadStatus = document.getElementById('upload-status');
 // Load stored updates (Newest first)
 let updatesList = JSON.parse(localStorage.getItem('nisha_updates')) || [];
 
+// --- Global Sync Images ---
+async function syncGlobalUpdates() {
+    try {
+        const res = await fetch('https://res.cloudinary.com/dvlxnbn7c/image/list/nk_global_updates.json');
+        if (res.ok) {
+            const data = await res.json();
+            let currentUpdates = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+            
+            data.resources.forEach(r => {
+                const url = `https://res.cloudinary.com/dvlxnbn7c/image/upload/v${r.version}/${r.public_id}.${r.format}`;
+                if (!currentUpdates.some(u => u.url === url)) {
+                    currentUpdates.push({
+                        url: url,
+                        caption: '', 
+                        date: r.created_at
+                    });
+                }
+            });
+            currentUpdates.sort((a, b) => new Date(b.date) - new Date(a.date));
+            updatesList = currentUpdates;
+            localStorage.setItem('nisha_updates', JSON.stringify(updatesList));
+        }
+    } catch (e) {
+        console.log("Global image sync failed:", e);
+    }
+    renderUpdates();
+}
+
 function renderUpdates() {
     if (!updateGrid) return;
     updateGrid.innerHTML = '';
@@ -1700,7 +1728,7 @@ function renderUpdates() {
 }
 
 // Initial render
-renderUpdates();
+syncGlobalUpdates();
 
 // Handle Modal Open/Close
 if (openUploadBtn) {
@@ -1826,7 +1854,12 @@ if (submitUploadBtn) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        if (isVideo) formData.append('folder', 'nk_uploaded_videos');
+        if (isVideo) {
+            formData.append('folder', 'nk_uploaded_videos');
+            formData.append('tags', 'nk_global_videos');
+        } else {
+            formData.append('tags', 'nk_global_updates');
+        }
 
         const endpoint = isVideo ? CLOUDINARY_VID_URL : CLOUDINARY_URL;
 
@@ -2010,5 +2043,32 @@ function renderUploadedVideos() {
     });
 }
 
+// --- Global Sync ---
+async function syncGlobalVideos() {
+    try {
+        const res = await fetch('https://res.cloudinary.com/dvlxnbn7c/video/list/nk_global_videos.json');
+        if (res.ok) {
+            const data = await res.json();
+            let videosList = JSON.parse(localStorage.getItem('nisha_videos')) || [];
+            
+            data.resources.forEach(r => {
+                const url = `https://res.cloudinary.com/dvlxnbn7c/video/upload/v${r.version}/${r.public_id}.${r.format}`;
+                if (!videosList.some(v => v.url === url)) {
+                    videosList.push({
+                        url: url,
+                        caption: '', // Cloudinary list API doesn't easily expose tags/context without admin API
+                        date: r.created_at
+                    });
+                }
+            });
+            videosList.sort((a, b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem('nisha_videos', JSON.stringify(videosList));
+        }
+    } catch (e) {
+        console.log("Global sync failed:", e);
+    }
+    renderUploadedVideos();
+}
+
 // Initial render of uploaded videos if on videos page
-renderUploadedVideos();
+syncGlobalVideos();
