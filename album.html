@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nisha & Krishna ❤️ - Album</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@300;400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+
+    <!-- Website Icon (Favicon) -->
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <link rel="shortcut icon" href="assets/images/favicon.png">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="password-overlay" class="password-overlay">
+        <div class="password-card glass-card glowing-border">
+            <div style="background: rgba(255, 118, 150, 0.1); padding: 8px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; color: var(--deep-red); font-size: 0.9rem; letter-spacing: 1px;">
+                <i class="fas fa-magic"></i> Hint: Try 1 2 3 4 5 6 password
+            </div>
+            <h2 class="romantic-title" style="font-size: 2.8rem; margin-bottom: 5px;">Only For Us ❤️</h2>
+            <p style="color: var(--text-muted); font-weight: 500; font-size: 1.1rem; margin-bottom: 15px;">Please enter our special password</p>
+            <div class="password-input-group">
+                <input type="password" id="secret-password" placeholder="Enter Password...">
+                <button id="unlock-btn" class="glowing-btn"><i class="fas fa-key"></i> Unlock</button>
+            </div>
+
+            <div style="margin: 20px 0; color: var(--text-muted); font-size: 0.9rem; position: relative;">
+                <span style="background: white; padding: 0 10px; z-index: 1; position: relative;">OR</span>
+                <hr style="position: absolute; top: 50%; left: 0; right: 0; border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 0;">
+            </div>
+
+            <button id="get-otp-btn" class="otp-trigger-btn">
+                <i class="fas fa-mobile-alt"></i> Get OTP Access
+            </button>
+
+            <p id="password-error" class="password-error">Incorrect password, my love. Try again.</p>
+        </div>
+    </div>
+
+    <div id="hearts-container"></div>
+
+    <!-- OTP Entry Modal -->
+    <div id="otp-modal" class="modal">
+        <div class="modal-content glass-card">
+            <span class="close-modal" id="close-otp">&times;</span>
+            <h2 class="otp-title romantic-title">OTP Verification</h2>
+            <p style="color: rgba(255,255,255,0.7);">Enter the 6-digit code sent to Krishna's phone.</p>
+            
+            <div class="otp-input-wrapper">
+                <input type="text" id="otp-code" maxlength="6" placeholder="0 0 0 0 0 0">
+                <button id="verify-otp-btn" class="glowing-btn">Verify & Unlock</button>
+            </div>
+            
+            <p id="otp-error" class="password-error" style="color: #ff5252;">Invalid OTP! Please try again.</p>
+        </div>
+    </div>
+    <div id="recaptcha-container"></div>
+
+    <!-- Temporary Session Timer -->
+    <div id="otp-timer" class="otp-timer-badge">
+        <i class="fas fa-clock"></i> Session: <span id="timer-countdown">05:00</span>
+    </div>
+
+    <nav class="glass-nav">
+        <div class="nav-brand">
+            <img src="assets/images/favicon.png" alt="Icon" class="brand-icon">
+            Nisha<span>Krishna</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html#home"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="moments.html#moments"><i class="fas fa-heart"></i> Moments</a></li>
+            <li><a href="memory.html#gallery"><i class="fas fa-images"></i> Gallery</a></li>
+            <li><a href="album.html"><i class="fas fa-book-open"></i> Album</a></li>
+            <li><a href="videos.html#videos"><i class="fas fa-video"></i> Videos</a></li>
+            <li><a href="diary.html#diary"><i class="fas fa-pen-fancy"></i> Diary</a></li>
+        </ul>
+        <div class="nav-toggle" id="nav-toggle">
+            <i class="fas fa-bars"></i>
+        </div>
+    </nav>
+
+    <section class="album-section">
+        <div class="section-header">
+            <h2 class="section-title">Aao Album dekhe</h2>
+            <div class="title-underline"></div>
+            <p class="section-desc">Open our special journal below.</p>
+        </div>
+
+        <div class="book-container">
+            <div id="book" class="book">
+                <!-- Cover -->
+                <div class="book-page">
+                    <div class="page-front book-cover">
+                        <h1 class="romantic-title" style="color: #006064; font-size: 3rem; text-shadow: none;">Aao Album dekhe</h1>
+                        <div style="margin-top: 20px; font-size: 4rem;">📔❤️</div>
+                        <p style="font-weight: 600; font-size: 1.2rem; margin-top: 15px; color: #00796b;">Nisha & Krishna</p>
+                        <span class="page-num">1</span>
+                    </div>
+                    <div class="page-back theme-lavender">
+                        <div class="album-text">
+                            "Where it all began..." <br><br>
+                            I still remember the first time I saw you. Everything else just faded away.
+                        </div>
+                        <span class="page-num">2</span>
+                    </div>
+                </div>
+
+                <!-- Page 1 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDJfMTI0NTQyNDQwX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 02, 2025</div>
+                        <span class="page-num">3</span>
+                    </div>
+                    <div class="page-back theme-peach">
+                        <div class="album-text">
+                            "Deep Connections." <br><br>
+                            Looking into your eyes is like finding home.
+                        </div>
+                        <span class="page-num">4</span>
+                    </div>
+                </div>
+
+                <!-- Page 2 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDJfMTU0MDIxMTkyX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 02, 2025</div>
+                        <span class="page-num">5</span>
+                    </div>
+                    <div class="page-back theme-mint">
+                        <div class="album-text">
+                            "Summer of Us." <br><br>
+                            Every smile you share makes the world brighter.
+                        </div>
+                        <span class="page-num">6</span>
+                    </div>
+                </div>
+
+                <!-- Page 3 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDRfMTU1MTQ5MDEzX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 04, 2025</div>
+                        <span class="page-num">7</span>
+                    </div>
+                    <div class="page-back theme-sky">
+                        <div class="album-text">
+                            "Fairytale Moments." <br><br>
+                            Walking beside you is my favorite journey.
+                        </div>
+                        <span class="page-num">8</span>
+                    </div>
+                </div>
+
+                <!-- Page 4 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDRfMTYxMDE1NjAwX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 04, 2025</div>
+                        <span class="page-num">9</span>
+                    </div>
+                    <div class="page-back theme-rose">
+                        <div class="album-text">
+                            "Chosen by Heart." <br><br>
+                            I didn't choose you, my heart did.
+                        </div>
+                        <span class="page-num">10</span>
+                    </div>
+                </div>
+
+                <!-- Page 5 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTEzNDQ1MzYyX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jul 13, 2025</div>
+                        <span class="page-num">11</span>
+                    </div>
+                    <div class="page-back theme-cream">
+                        <div class="album-text">
+                            "Peaceful Sundays." <br><br>
+                            You're the peace I crave in this chaotic world.
+                        </div>
+                        <span class="page-num">12</span>
+                    </div>
+                </div>
+
+                <!-- Page 6 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTYxODAwMDQ5X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jul 13, 2025</div>
+                        <span class="page-num">13</span>
+                    </div>
+                    <div class="page-back theme-lavender">
+                        <div class="album-text">
+                            "Forever isn't enough." <br><br>
+                            I could spend an eternity in this moment.
+                        </div>
+                        <span class="page-num">14</span>
+                    </div>
+                </div>
+
+                <!-- Page 7 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTc0MTE5MjI3X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jul 13, 2025</div>
+                        <span class="page-num">15</span>
+                    </div>
+                    <div class="page-back theme-peach">
+                        <div class="album-text">
+                            "My Life in One Frame." <br><br>
+                            Everything i ever wanted is right here.
+                        </div>
+                        <span class="page-num">16</span>
+                    </div>
+                </div>
+
+                <!-- Page 8 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUctMjAyNTA3MjYtV0EwMjAyLmpwZw==" alt="Memory" class="album-img">
+                        <div class="album-date">Jul 26, 2025</div>
+                        <span class="page-num">17</span>
+                    </div>
+                    <div class="page-back theme-mint">
+                        <div class="album-text">
+                            "Simply the Best." <br><br>
+                            You are the best thing that's ever been mine.
+                        </div>
+                        <span class="page-num">18</span>
+                    </div>
+                </div>
+
+                <!-- Page 9 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEwMTZfMDgxODI2MTIxX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Oct 16, 2025</div>
+                        <span class="page-num">19</span>
+                    </div>
+                    <div class="page-back theme-sky">
+                        <div class="album-text">
+                            "Everything is Better." <br><br>
+                            Life is just more beautiful with you.
+                        </div>
+                        <span class="page-num">20</span>
+                    </div>
+                </div>
+
+                <!-- Page 10 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy8xNzY0NDk2MDY2NzY2fjIuanBn" alt="Memory" class="album-img">
+                        <div class="album-date">Nov 30, 2025</div>
+                        <span class="page-num">21</span>
+                    </div>
+                    <div class="page-back theme-rose">
+                        <div class="album-text">
+                            "Feeling Like Home." <br><br>
+                            Where you are, that's where I belong.
+                        </div>
+                        <span class="page-num">22</span>
+                    </div>
+                </div>
+
+                <!-- Page 11 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTIxODA0ODg2X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Dec 17, 2025</div>
+                        <span class="page-num">23</span>
+                    </div>
+                    <div class="page-back theme-cream">
+                        <div class="album-text">
+                            "Winter Wonders." <br><br>
+                            Cold hands, warm heart.
+                        </div>
+                        <span class="page-num">24</span>
+                    </div>
+                </div>
+
+                <!-- Page 12 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTM0OTM3MDAzX0hEUl9QT1JUUkFJVC5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Dec 17, 2025</div>
+                        <span class="page-num">25</span>
+                    </div>
+                    <div class="page-back theme-lavender">
+                        <div class="album-text">
+                            "Gifts of Love." <br><br>
+                            The best gift I ever received was your love.
+                        </div>
+                        <span class="page-num">26</span>
+                    </div>
+                </div>
+
+                <!-- Page 13 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTc0NzAxNTk3X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Dec 17, 2025</div>
+                        <span class="page-num">27</span>
+                    </div>
+                    <div class="page-back theme-peach">
+                        <div class="album-text">
+                            "Thinking of You." <br><br>
+                            You're always on my mind, my beautiful babu.
+                        </div>
+                        <span class="page-num">28</span>
+                    </div>
+                </div>
+
+                <!-- Page 14 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTgxNjA1MjcwX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Dec 17, 2025</div>
+                        <span class="page-num">29</span>
+                    </div>
+                    <div class="page-back theme-mint">
+                        <div class="album-text">
+                            "Infinite Love." <br><br>
+                            True love has no end.
+                        </div>
+                        <span class="page-num">30</span>
+                    </div>
+                </div>
+
+                <!-- Page 15 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9TY3JlZW5zaG90XzIwMjUxMjE5LTE5NTQxOC5GaWxlcyBieSBHb29nbGV+Mi5wbmc=" alt="Memory" class="album-img">
+                        <div class="album-date">Dec 19, 2025</div>
+                        <span class="page-num">31</span>
+                    </div>
+                    <div class="page-back theme-sky">
+                        <div class="album-text">
+                            "Precious Stills." <br><br>
+                            Every screenshot of our life is a treasure.
+                        </div>
+                        <span class="page-num">32</span>
+                    </div>
+                </div>
+
+                <!-- Page 16 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy8xNzY2NDAwNjIwNzE3LmpwZw==" alt="Memory" class="album-img">
+                        <div class="album-date">Dec 22, 2025</div>
+                        <span class="page-num">33</span>
+                    </div>
+                    <div class="page-back theme-rose">
+                        <div class="album-text">
+                            "End of the Year Glow." <br><br>
+                            Closing the year with you is the perfect finale.
+                        </div>
+                        <span class="page-num">34</span>
+                    </div>
+                </div>
+
+                <!-- Page 17 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy8yMDI1MTIyN18yMTQ5MzYtQ09MTEFHRS5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Dec 27, 2025</div>
+                        <span class="page-num">35</span>
+                    </div>
+                    <div class="page-back theme-cream">
+                        <div class="album-text">
+                            "Collage of Joy." <br><br>
+                            Many moments, one heart.
+                        </div>
+                        <span class="page-num">36</span>
+                    </div>
+                </div>
+
+                <!-- Page 18 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTFfMjEyNDQwNDgzX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Feb 11, 2026</div>
+                        <span class="page-num">37</span>
+                    </div>
+                    <div class="page-back theme-lavender">
+                        <div class="album-text">
+                            "Valentine's Eve." <br><br>
+                            Preparing for the big day with the best person.
+                        </div>
+                        <span class="page-num">38</span>
+                    </div>
+                </div>
+
+                <!-- Page 19 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTJfMTIwODE3MzYyX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Feb 12, 2026</div>
+                        <span class="page-num">39</span>
+                    </div>
+                    <div class="page-back theme-peach">
+                        <div class="album-text">
+                            "Love is in the Air." <br><br>
+                            Our official month of love begins.
+                        </div>
+                        <span class="page-num">40</span>
+                    </div>
+                </div>
+
+                <!-- Page 20 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTJfMTIwODQ2ODYxX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Feb 12, 2026</div>
+                        <span class="page-num">41</span>
+                    </div>
+                    <div class="page-back theme-mint">
+                        <div class="album-text">
+                            "Together Forever." <br><br>
+                            No matter the place, as long as we're together.
+                        </div>
+                        <span class="page-num">42</span>
+                    </div>
+                </div>
+
+                <!-- Page 21 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTJfMTUxMjAwNDI5X0hEUl9QT1JUUkFJVC5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Feb 12, 2026</div>
+                        <span class="page-num">43</span>
+                    </div>
+                    <div class="page-back theme-sky">
+                        <div class="album-text">
+                            "Portrait of Perfection." <br><br>
+                            I could stare at you all day.
+                        </div>
+                        <span class="page-num">44</span>
+                    </div>
+                </div>
+
+                <!-- Page 22 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTJfMTUyMzI1MTk2X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Feb 12, 2026</div>
+                        <span class="page-num">45</span>
+                    </div>
+                    <div class="page-back theme-rose">
+                        <div class="album-text">
+                            "Heart with an Arrow." <br><br>
+                            Cupid definitely got it right with us.
+                        </div>
+                        <span class="page-num">46</span>
+                    </div>
+                </div>
+
+                <!-- Page 23 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAzMTdfMTA0NzQxNjIyX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Mar 17, 2026</div>
+                        <span class="page-num">47</span>
+                    </div>
+                    <div class="page-back theme-cream">
+                        <div class="album-text">
+                            "Spring Blossoms." <br><br>
+                            Our love is in full bloom.
+                        </div>
+                        <span class="page-num">48</span>
+                    </div>
+                </div>
+
+                <!-- Page 24 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAzMTdfMTA0NzQ1MjE3X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Mar 17, 2026</div>
+                        <span class="page-num">49</span>
+                    </div>
+                    <div class="page-back theme-lavender">
+                        <div class="album-text">
+                            "Infinite Spring." <br><br>
+                            Every day is fresh and new with you.
+                        </div>
+                        <span class="page-num">50</span>
+                    </div>
+                </div>
+
+                <!-- Page 25 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUctMjAyNjAzMTktV0EwMDU4LmpwZw==" alt="Memory" class="album-img">
+                        <div class="album-date">Mar 19, 2026</div>
+                        <span class="page-num">51</span>
+                    </div>
+                    <div class="page-back theme-peach">
+                        <div class="album-text">
+                            "Latest and Dearest." <br><br>
+                            The most recent chapter, just as sweet as the first.
+                        </div>
+                        <span class="page-num">52</span>
+                    </div>
+                </div>
+
+                <!-- Page 26 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAzMTlfMTExNDQ4MjcxX0hEUl9QT1JUUkFJVC5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Mar 19, 2026</div>
+                        <span class="page-num">53</span>
+                    </div>
+                    <div class="page-back theme-mint">
+                        <div class="album-text">
+                            "Shining Through." <br><br>
+                            Your glow is my lighthouse.
+                        </div>
+                        <span class="page-num">54</span>
+                    </div>
+                </div>
+
+                <!-- Page 27 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAzMTlfMTExNDU2OTk5X0hEUl9QT1JUUkFJVC5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Mar 19, 2026</div>
+                        <span class="page-num">55</span>
+                    </div>
+                    <div class="page-back theme-sky">
+                        <div class="album-text">
+                            "Forever and Ever." <br><br>
+                            Our journey is just beginning.
+                        </div>
+                        <span class="page-num">56</span>
+                    </div>
+                </div>
+
+                <!-- Page 28 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDJfMTI0NTMyMTkzX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 02, 2025</div>
+                        <span class="page-num">57</span>
+                    </div>
+                    <div class="page-back theme-peach">
+                        <div class="album-text">
+                            "A Glimpse of Joy." <br><br>
+                            Your laughter is the only music I ever want to hear.
+                        </div>
+                        <span class="page-num">58</span>
+                    </div>
+                </div>
+
+                <!-- Page 29 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDNfMDI0OTM1MTg0X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 03, 2025</div>
+                        <span class="page-num">59</span>
+                    </div>
+                    <div class="page-back theme-mint">
+                        <div class="album-text">
+                            "Deep Blue Dreams." <br><br>
+                            Getting lost in your thoughts is my favorite pastime.
+                        </div>
+                        <span class="page-num">60</span>
+                    </div>
+                </div>
+
+                <!-- Page 30 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDRfMTYyNDE0MjYwX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 04, 2025</div>
+                        <span class="page-num">61</span>
+                    </div>
+                    <div class="page-back theme-rose">
+                        <div class="album-text">
+                            "Our Secret Garden." <br><br>
+                            Every day we grow a little more together.
+                        </div>
+                        <span class="page-num">62</span>
+                    </div>
+                </div>
+
+                <!-- Page 31 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTMzNTExNjczX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Dec 17, 2025</div>
+                        <span class="page-num">63</span>
+                    </div>
+                    <div class="page-back theme-lavender">
+                        <div class="album-text">
+                            "Heart To Heart." <br><br>
+                            No matter the distance, we are always connected.
+                        </div>
+                        <span class="page-num">64</span>
+                    </div>
+                </div>
+
+                <!-- Page 32 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDJfMTY0MjM1OTc0X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 02, 2025</div>
+                        <span class="page-num">65</span>
+                    </div>
+                    <div class="page-back theme-peach">
+                        <div class="album-text">
+                            "Heart Beats for You." <br><br>
+                            You're the rhythm of my life.
+                        </div>
+                        <span class="page-num">66</span>
+                    </div>
+                </div>
+
+                <!-- Page 33 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDRfMTYzNTI4NjEwX0hEUl9QT1JUUkFJVC5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 04, 2025</div>
+                        <span class="page-num">67</span>
+                    </div>
+                    <div class="page-back theme-mint">
+                        <div class="album-text">
+                            "A Sweet Chapter." <br><br>
+                            Every word we speak is a beautiful verse.
+                        </div>
+                        <span class="page-num">68</span>
+                    </div>
+                </div>
+
+                <!-- Page 34 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTU1MDI0MjQ4LmpwZw==" alt="Memory" class="album-img">
+                        <div class="album-date">Jul 13, 2025</div>
+                        <span class="page-num">69</span>
+                    </div>
+                    <div class="page-back theme-sky">
+                        <div class="album-text">
+                            "A Summer Song." <br><br>
+                            Your presence feels like sunshine on a rainy day.
+                        </div>
+                        <span class="page-num">70</span>
+                    </div>
+                </div>
+
+                <!-- Page 35 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTU1NzQzNTcxX0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jul 13, 2025</div>
+                        <span class="page-num">71</span>
+                    </div>
+                    <div class="page-back theme-rose">
+                        <div class="album-text">
+                            "Soul connection." <br><br>
+                            A million years wouldn't be enough with you.
+                        </div>
+                        <span class="page-num">72</span>
+                    </div>
+                </div>
+
+                <!-- Page 36 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTYwNTM5NDk4X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Jul 13, 2025</div>
+                        <span class="page-num">73</span>
+                    </div>
+                    <div class="page-back theme-cream">
+                        <div class="album-text">
+                            "Mirror to my heart." <br><br>
+                            I see my future every time I look at you.
+                        </div>
+                        <span class="page-num">74</span>
+                    </div>
+                </div>
+
+                <!-- Page 37 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEwMTZfMDgxODI5MTA2X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Oct 16, 2025</div>
+                        <span class="page-num">75</span>
+                    </div>
+                    <div class="page-back theme-lavender">
+                        <div class="album-text">
+                            "Autumn Memories." <br><br>
+                            Falling for you was the easiest thing I ever did.
+                        </div>
+                        <span class="page-num">76</span>
+                    </div>
+                </div>
+
+                <!-- Page 38 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEwMTZfMTc1MTUwNTA5X0hEUi5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Oct 16, 2025</div>
+                        <span class="page-num">77</span>
+                    </div>
+                    <div class="page-back theme-peach">
+                        <div class="album-text">
+                            "Warmth in You." <br><br>
+                            My harbor in every storm.
+                        </div>
+                        <span class="page-num">78</span>
+                    </div>
+                </div>
+
+                <!-- Page 39 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy8yMDI1MDgwMV8xNjA5NTctQ09MTEFHRS5qcGc=" alt="Memory" class="album-img">
+                        <div class="album-date">Aug 01, 2025</div>
+                        <span class="page-num">79</span>
+                    </div>
+                    <div class="page-back theme-mint">
+                        <div class="album-text">
+                            "Moments we Treasure." <br><br>
+                            One collage, a lifetime of smiles.
+                        </div>
+                        <span class="page-num">80</span>
+                    </div>
+                </div>
+
+                <!-- Page 40 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUctMjAyNTA1MjAtV0EwMDI1LmpwZw==" alt="Memory" class="album-img">
+                        <div class="album-date">May 20, 2025</div>
+                        <span class="page-num">81</span>
+                    </div>
+                    <div class="page-back theme-rose">
+                        <div class="album-text">
+                            "A Sweet Beginning." <br><br>
+                            Where our path first started to cross.
+                        </div>
+                        <span class="page-num">82</span>
+                    </div>
+                </div>
+
+                <!-- Page 41 -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUctMjAyNTA2MjAtV0EwMDk4LmpwZw==" alt="Memory" class="album-img">
+                        <div class="album-date">Jun 20, 2025</div>
+                        <span class="page-num">83</span>
+                    </div>
+                    <div class="page-back theme-sky">
+                        <div class="album-text">
+                            "Light of My Life." <br><br>
+                            You illuminate every corner of my soul.
+                        </div>
+                        <span class="page-num">84</span>
+                    </div>
+                </div>
+
+                <!-- Back Cover -->
+                <div class="book-page">
+                    <div class="page-front">
+                        <div class="album-text theme-rose">
+                            "To be continued..." <br><br>
+                            The best is yet to come. I love you, Nisha.
+                        </div>
+                        <span class="page-num">85</span>
+                    </div>
+                    <div class="page-back book-cover">
+                        <h2 class="romantic-title" style="color: #006064; font-size: 2.2rem;">Album khatam?</h2>
+                        <div style="margin: 15px 0; font-size: 2.5rem; color: #00796b;">Abhi to shuruat hai! ✨❤️</div>
+                        <p style="color: #00897b;">Nisha & Krishna Forever ♾️</p>
+                        <span class="page-num">86</span>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- Magic Box -->
+        <div class="magic-input-container">
+            <h3 class="romantic-title" style="font-size: 1.8rem; margin-bottom: 15px;">✨ Magic Jump ✨</h3>
+            <div class="magic-input-group">
+                <input type="number" id="magic-page-num" placeholder="Write any number to see magic...">
+                <button id="magic-continue-btn" class="glowing-btn">Press Continue</button>
+            </div>
+            <p id="magic-error" style="color: var(--deep-red); margin-top: 10px; font-weight: 600; display: none;">Oops! That page doesn't exist yet ❤️</p>
+        </div>
+    </section>
+
+    <div class="music-player">
+        <audio id="bg-music" autoplay loop>
+            <source src="assets/music/album.mp3" type="audio/mpeg">
+        </audio>
+        <button id="music-btn" class="glowing-btn" title="Play Music">
+            <i class="fas fa-music"></i>
+        </button>
+    </div>
+
+    <footer>
+        <div class="container text-center">
+            <h3 class="romantic-title">Nisha & Krishna</h3>
+            <p>Made with love ❤️</p>
+        </div>
+    </footer>
+
+    <!-- Magic Heart Search Modal -->
+    <div id="heart-search-modal" class="heart-search-modal">
+        <div class="search-modal-content">
+            <span class="close-search-modal" id="close-search-modal">&times;</span>
+            
+            <div class="magic-heart-container" id="trigger-search">
+                <svg class="magic-heart-svg magic-heart-idle" id="magic-heart-svg" viewBox="0 0 24 24">
+                    <defs>
+                        <!-- 3D Bulge Gradient -->
+                        <radialGradient id="heart3D" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+                            <stop offset="0%" stop-color="#ff9eb3" />
+                            <stop offset="60%" stop-color="#ff4b6a" />
+                            <stop offset="100%" stop-color="#8b0020" />
+                        </radialGradient>
+                        
+                        <clipPath id="heart-clip-v2">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </clipPath>
+                    </defs>
+                    <g clip-path="url(#heart-clip-v2)">
+                        <!-- 1. Main Bulging Body -->
+                        <rect width="24" height="24" fill="url(#heart3D)" id="heart-body" />
+                        
+                        <!-- 2. Reflection Highlight (Behind the image) -->
+                        <ellipse cx="8" cy="7" rx="4" ry="2" fill="white" opacity="0.4" transform="rotate(-30, 8, 7)" />
+                        
+                        <!-- 3. Flashing/Final Images (On Top) -->
+                        <image id="svg-search-img" x="0" y="0" width="24" height="24" preserveAspectRatio="xMidYMid slice" href="" style="opacity: 0;" />
+                    </g>
+                </svg>
+                <div class="heart-glow"></div>
+            </div>
+            
+            <p class="search-instruction">Click the heart to find a special memory... ❤️</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+    <!-- ===================================================
+         ROMANTIC CHAT ROOM - Floating Button & Modal
+         =================================================== -->
+
+    <!-- Floating Chat Button -->
+    <div class="chat-float-btn-container">
+        <button id="chat-float-btn" class="glowing-btn" title="Our Love Chat 💬" aria-label="Open Chat">
+            <i class="fas fa-comments"></i>
+            <span class="chat-unread-badge" id="chat-unread-badge">0</span>
+        </button>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chat-modal">
+        <div class="chat-window">
+
+            <!-- Header -->
+            <div class="chat-header">
+                <div class="chat-header-avatars">
+                    <div class="chat-avatar">💗</div>
+                    <div class="chat-avatar">💜</div>
+                </div>
+                <div class="chat-header-info">
+                    <div class="chat-header-title">Nisha &amp; Krishna 💕</div>
+                    <div class="chat-header-status">
+                        <span class="online-dot"></span> Our Love Room
+                    </div>
+                </div>
+                <div style="margin-right: 10px;">
+                    <button id="chat-start-call-btn" title="Voice Call" style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:36px; height:36px; color:white; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                </div>
+                <button id="close-chat-btn" aria-label="Close chat">✕</button>
+            </div>
+
+            <!-- Sender Selector -->
+            <div class="sender-selector">
+                <button class="sender-btn active" id="sender-nisha-btn">💗 I am Nisha</button>
+                <button class="sender-btn" id="sender-krishna-btn">💜 I am Krishna</button>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-empty-state">
+                    <div class="empty-icon">💌</div>
+                    <p>No messages yet...<br>Say something sweet! ❤️</p>
+                </div>
+            </div>
+
+            <!-- Typing area -->
+            <div class="chat-typing" id="chat-typing" style="display:none;">
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <!-- Image preview -->
+                <div class="chat-img-preview" id="chat-img-preview">
+                    <img src="" alt="Preview" id="chat-img-preview-img">
+                    <button class="chat-img-preview-close" id="chat-img-preview-close" title="Remove">✕</button>
+                </div>
+
+                <div class="chat-input-row">
+                    <textarea
+                        id="chat-text-input"
+                        class="chat-text-input"
+                        placeholder="Say something sweet, Nisha 💗..."
+                        rows="1"
+                        maxlength="1000"
+                    ></textarea>
+                    <button class="chat-action-btn chat-img-btn" id="chat-img-btn" title="Share a photo 📷">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button class="chat-action-btn chat-send-btn" id="chat-send-btn" disabled title="Send">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <input type="file" id="chat-img-file-input" accept="image/*" hidden>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Image Lightbox -->
+    <div class="chat-img-lightbox" id="chat-img-lightbox">
+        <span class="chat-img-lightbox-close" id="chat-lbox-close">✕</span>
+        <img src="" alt="Chat photo" id="chat-lbox-img">
+    </div>
+    <!-- Chat Logic -->
+    <script src="chat.js"></script>
+
+</body>
+</html>

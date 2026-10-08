@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nisha & Krishna ❤️</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@300;400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5684348194282572" crossorigin="anonymous"></script>
+
+
+    <!-- Website Icon (Favicon) -->
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <link rel="shortcut icon" href="assets/images/favicon.png">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Password Overlay -->
+    <div id="password-overlay" class="password-overlay">
+        <div class="password-card glass-card glowing-border">
+            <div style="background: rgba(255, 118, 150, 0.1); padding: 8px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; color: var(--deep-red); font-size: 0.9rem; letter-spacing: 1px;">
+                <i class="fas fa-magic"></i> Hint: Try 1 2 3 4 5 6 password
+            </div>
+            <h2 class="romantic-title" style="font-size: 2.8rem; margin-bottom: 5px;">Only For Us ❤️</h2>
+            <p style="color: var(--text-muted); font-weight: 500; font-size: 1.1rem; margin-bottom: 15px;">Please enter our special password</p>
+            <div class="password-input-group">
+                <input type="password" id="secret-password" placeholder="Enter Password...">
+                <button id="unlock-btn" class="glowing-btn"><i class="fas fa-key"></i> Unlock</button>
+            </div>
+
+            <div style="margin: 20px 0; color: var(--text-muted); font-size: 0.9rem; position: relative;">
+                <span style="background: white; padding: 0 10px; z-index: 1; position: relative;">OR</span>
+                <hr style="position: absolute; top: 50%; left: 0; right: 0; border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 0;">
+            </div>
+
+            <button id="get-otp-btn" class="otp-trigger-btn">
+                <i class="fas fa-mobile-alt"></i> Get OTP Access
+            </button>
+
+            <p id="password-error" class="password-error">Incorrect password, my love. Try again.</p>
+        </div>
+    </div>
+    <!-- Floating Hearts Container -->
+    <div id="hearts-container"></div>
+    
+    <!-- OTP Entry Modal -->
+    <div id="otp-modal" class="modal">
+        <div class="modal-content glass-card">
+            <span class="close-modal" id="close-otp">&times;</span>
+            <h2 class="otp-title romantic-title">OTP Verification</h2>
+            <p style="color: rgba(255,255,255,0.7);">Enter the 6-digit code sent to Krishna's phone.</p>
+            
+            <div class="otp-input-wrapper">
+                <input type="text" id="otp-code" maxlength="6" placeholder="0 0 0 0 0 0">
+                <button id="verify-otp-btn" class="glowing-btn">Verify & Unlock</button>
+            </div>
+            
+            <p id="otp-error" class="password-error" style="color: #ff5252;">Invalid OTP! Please try again.</p>
+        </div>
+    </div>
+    <div id="recaptcha-container"></div>
+
+    <!-- Temporary Session Timer -->
+    <div id="otp-timer" class="otp-timer-badge">
+        <i class="fas fa-clock"></i> Session: <span id="timer-countdown">05:00</span>
+    </div>
+    
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" id="lightbox-close"><i class="fas fa-times"></i></span>
+        <div class="lightbox-nav lightbox-prev" id="lightbox-prev"><i class="fas fa-chevron-left"></i></div>
+        <img class="lightbox-img" id="lightbox-img" src="" alt="Enlarged lovely photo">
+        <div class="lightbox-nav lightbox-next" id="lightbox-next"><i class="fas fa-chevron-right"></i></div>
+        <div class="lightbox-caption" id="lightbox-caption"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="glass-nav">
+        <div class="nav-brand">
+            <img src="assets/images/favicon.png" alt="Icon" class="brand-icon">
+            Nisha<span>Krishna</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html#home"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="moments.html#moments"><i class="fas fa-heart"></i> Moments</a></li>
+            <li><a href="memory.html#gallery"><i class="fas fa-images"></i> Gallery</a></li>
+            <li><a href="album.html"><i class="fas fa-book-open"></i> Album</a></li>
+            <li><a href="videos.html#videos"><i class="fas fa-video"></i> Videos</a></li>
+            <li><a href="diary.html#diary"><i class="fas fa-pen-fancy"></i> Diary</a></li>
+        </ul>
+        <div class="nav-toggle" id="nav-toggle">
+            <i class="fas fa-bars"></i>
+        </div>
+    </nav>
+
+<!-- Masonry Grid Gallery -->
+    <section id="gallery" class="section bg-soft">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our Gallery</h2>
+                <div class="title-underline"></div>
+                <p class="section-desc">A collection of our purest, cutest moments captured forever.</p>
+            </div>
+            
+            <div class="masonry-grid">
+                <!-- Newest Memories (March 2026) -->
+                <div class="masonry-item item-large scroll-reveal" data-caption="Everything is better when we're together.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAzMTlfMTExNDQ4MjcxX0hEUl9QT1JUUkFJVC5qcGc=" alt="Latest Memory 1">
+                    <div class="date-badge">Mar 19, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Everything is better with you."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💖</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="In your smile, I see something more beautiful than stars.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAzMTlfMTExNDU2OTk5X0hEUl9QT1JUUkFJVC5qcGc=" alt="Latest Memory 2">
+                    <div class="date-badge">Mar 19, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"You shine brighter than stars."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">✨</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-tall scroll-reveal" data-caption="Home is where you are.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUctMjAyNjAzMTktV0EwMDU4LmpwZw==" alt="Latest Memory 3">
+                    <div class="date-badge">Mar 19, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Home is where you are."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🏠</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-small scroll-reveal" data-caption="You are the piece that fits perfectly in my life.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAzMTdfMTA0NzQxNjIyX0hEUi5qcGc=" alt="Latest Memory 4">
+                    <div class="date-badge">Mar 17, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Perfectly fits in my life."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🧩</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-large scroll-reveal" data-caption="My love for you is a journey, starting at forever and ending at never.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAzMTdfMTA0NzQ1MjE3X0hEUi5qcGc=" alt="Latest Memory 5">
+                    <div class="date-badge">Mar 17, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Love you forever & always."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💍</div>
+                    </div>
+                </div>
+
+                <!-- Previous Gallery items -->
+                <div class="masonry-item item-large scroll-reveal" data-caption="In your light I learn how to love.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy8xNzY2NDAwNjIwNzE3LmpwZw==" alt="Couple Photo Portrait">
+                    <div class="date-badge">Dec 22, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"In your light I learn how to love."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💌</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="You are my today and all of my tomorrows.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTJfMTIwODE3MzYyX0hEUi5qcGc=" alt="Couple Photo 2">
+                    <div class="date-badge">Feb 12, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"You are my today and all of my tomorrows."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">❤️</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-small scroll-reveal" data-caption="Every love story is beautiful, but ours is my favorite.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTJfMTUyMzI1MTk2X0hEUi5qcGc=" alt="Couple Photo 3">
+                    <div class="date-badge">Feb 12, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Ours is my favorite."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💑</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-tall scroll-reveal" data-caption="You feel like home to me.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy8xNzY0NDk2MDY2NzY2fjIuanBn" alt="Couple Photo Profile">
+                    <div class="date-badge">Nov 30, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"You feel like home to me."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🌹</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="I fall in love with you every single day.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTJfMTIwODQ2ODYxX0hEUi5qcGc=" alt="Couple Photo 4">
+                    <div class="date-badge">Feb 12, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"I fall in love with you every single day."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">😘</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-large scroll-reveal" data-caption="My favorite place is next to you.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTJfMTUxMjAwNDI5X0hEUl9QT1JUUkFJVC5qcGc=" alt="Couple Photo 5">
+                    <div class="date-badge">Feb 12, 2026</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"My favorite place is next to you."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🌹</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-tall scroll-reveal" data-caption="You are the best thing that's ever been mine.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUctMjAyNTA3MjYtV0EwMjAyLmpwZw==" alt="Couple Photo 6">
+                    <div class="date-badge">Jul 26, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"You are the best thing that's ever been mine."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🥺</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="Loving you is the most beautiful thing I've ever done.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDJfMTI0NTQyNDQwX0hEUi5qcGc=" alt="Couple Photo 7">
+                    <div class="date-badge">Jun 02, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Loving you is the beautiful thing I've done."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🥺</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-large scroll-reveal" data-caption="You are my heart, my life, my entire existence.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDJfMTU0MDIxMTkyX0hEUi5qcGc=" alt="Couple Photo 8">
+                    <div class="date-badge">Jun 02, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"You are my entire existence."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💘</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-small scroll-reveal" data-caption="With you, every moment is a fairytale.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDRfMTU1MTQ5MDEzX0hEUi5qcGc=" alt="Couple Photo 9">
+                    <div class="date-badge">Jun 04, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Every moment is a fairytale."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💌</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="I didn't choose you, my heart did.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDRfMTYxMDE1NjAwX0hEUi5qcGc=" alt="Couple Photo 10">
+                    <div class="date-badge">Jun 04, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"I didn't choose you, my heart did."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💍</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-large scroll-reveal" data-caption="You're the peace I crave in this chaotic world.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTEzNDQ1MzYyX0hEUi5qcGc=" alt="Couple Photo 11">
+                    <div class="date-badge">Jul 13, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"You're the peace I crave."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">✨</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="Forever isn't long enough with you.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTYxODAwMDQ5X0hEUi5qcGc=" alt="Couple Photo 12">
+                    <div class="date-badge">Jul 13, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Forever isn't long enough."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💞</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-small scroll-reveal" data-caption="I look at you and see the rest of my life.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTc0MTE5MjI3X0hEUi5qcGc=" alt="Couple Photo 13">
+                    <div class="date-badge">Jul 13, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"I see the rest of my life."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💌</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="Everything is better with you.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEwMTZfMDgxODI2MTIxX0hEUi5qcGc=" alt="Couple Photo 14">
+                    <div class="date-badge">Oct 16, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Everything is better with you."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💖</div>
+                    </div>
+                </div>
+                <!-- Additional Memories -->
+                <div class="masonry-item item-large scroll-reveal" data-caption="You are my favorite person.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy8yMDI1MTIyN18yMTQ5MzYtQ09MTEFHRS5qcGc=" alt="Memory Collage">
+                    <div class="date-badge">Dec 27, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"You are my favorite person."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💝</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="Capturing our precious time.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9TY3JlZW5zaG90XzIwMjUxMjE5LTE5NTQxOC5GaWxlcyBieSBHb29nbGV+Mi5wbmc=" alt="Memory Screenshot">
+                    <div class="date-badge">Dec 19, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Capturing our precious time."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">📸</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-tall scroll-reveal" data-caption="Every moment is a treasure.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTIxODA0ODg2X0hEUi5qcGc=" alt="Memory 15">
+                    <div class="date-badge">Dec 17, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Every moment is a treasure."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💎</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-small scroll-reveal" data-caption="Your love is all I need.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTM0OTM3MDAzX0hEUl9QT1JUUkFJVC5qcGc=" alt="Memory 16">
+                    <div class="date-badge">Dec 17, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Your love is all I need."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🫂</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="Thinking of you always.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTc0NzAxNTk3X0hEUi5qcGc=" alt="Memory 17" style="object-position: top;">
+                    <div class="date-badge">Dec 17, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Thinking of you always."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💭</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-large scroll-reveal" data-caption="True love never ends.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTgxNjA1MjcwX0hEUi5qcGc=" alt="Memory 18">
+                    <div class="date-badge">Dec 17, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"True love never ends."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">♾️</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="A glimpse of heaven in your eyes.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDJfMTI0NTMyMTkzX0hEUi5qcGc=" alt="Memory 20">
+                    <div class="date-badge">Jun 02, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Heaven in your eyes."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🕊️</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-large scroll-reveal" data-caption="Laughter is our favorite melody.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDJfMTY0MjM1OTc0X0hEUi5qcGc=" alt="Memory 21">
+                    <div class="date-badge">Jun 02, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Our melody of love."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🎶</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-tall scroll-reveal" data-caption="With you, my soul finds its home.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDNfMDI0OTM1MTg0X0hEUi5qcGc=" alt="Memory 22">
+                    <div class="date-badge">Jun 03, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Soul found its home."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🏠</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-small scroll-reveal" data-caption="You are my favorite thought.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEwMTZfMDgxODI5MTA2X0hEUi5qcGc=" alt="Memory 23">
+                    <div class="date-badge">Oct 16, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"My favorite thought."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💭</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-medium scroll-reveal" data-caption="Our bond is unbreakable.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy8yMDI1MDgwMV8xNjA5NTctQ09MTEFHRS5qcGc=" alt="Memory Collage 2">
+                    <div class="date-badge">Aug 01, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Unbreakable bond."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🔗</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-large scroll-reveal" data-caption="Beauty in every moment.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA3MTNfMTYwNTM5NDk4X0hEUi5qcGc=" alt="Memory 24">
+                    <div class="date-badge">Jul 13, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Beauty in us."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">💖</div>
+                    </div>
+                </div>
+                <div class="masonry-item item-small scroll-reveal" data-caption="Life is sweet with you.">
+                    <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTA2MDRfMTYzNTI4NjEwX0hEUl9QT1JUUkFJVC5qcGc=" alt="Memory 25">
+                    <div class="date-badge">Jun 04, 2025</div>
+                    <div class="item-overlay">
+                        <div class="romantic-quote">"Sweet life."</div>
+                        <div class="hover-emoji" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.8); animation: heartbeat 1.5s infinite;">🍭</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+<!-- Floating Music Player -->
+    <div class="music-player">
+        <audio id="bg-music" autoplay loop>
+            <source src="assets/music/gallery.mp3" type="audio/mpeg">
+        </audio>
+        <button id="music-btn" class="glowing-btn" title="Play Music">
+            <i class="fas fa-music"></i>
+        </button>
+    </div>
+
+<!-- Footer -->
+    <footer>
+        <div class="container text-center">
+            <div class="footer-hearts">
+                <i class="fas fa-heart"></i>
+                <i class="fas fa-heart"></i>
+                <i class="fas fa-heart"></i>
+            </div>
+            <h3 class="romantic-title" style="font-size: 2.5rem; margin: 15px 0;">Nisha & Krishna</h3>
+            <p>Made with endless love and a million kisses 😘</p>
+            <p class="copyright">&copy; 2026 For My Babu. Forever & Always.</p>
+        </div>
+    </footer>
+
+    <!-- Magic Heart Search Modal -->
+    <div id="heart-search-modal" class="heart-search-modal">
+        <div class="search-modal-content">
+            <span class="close-search-modal" id="close-search-modal">&times;</span>
+            
+            <div class="magic-heart-container" id="trigger-search">
+                <svg class="magic-heart-svg magic-heart-idle" id="magic-heart-svg" viewBox="0 0 24 24">
+                    <defs>
+                        <!-- 3D Bulge Gradient -->
+                        <radialGradient id="heart3D" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+                            <stop offset="0%" stop-color="#ff9eb3" />
+                            <stop offset="60%" stop-color="#ff4b6a" />
+                            <stop offset="100%" stop-color="#8b0020" />
+                        </radialGradient>
+                        
+                        <clipPath id="heart-clip-v2">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </clipPath>
+                    </defs>
+                    <g clip-path="url(#heart-clip-v2)">
+                        <!-- 1. Main Bulging Body -->
+                        <rect width="24" height="24" fill="url(#heart3D)" id="heart-body" />
+                        
+                        <!-- 2. Reflection Highlight (Behind the image) -->
+                        <ellipse cx="8" cy="7" rx="4" ry="2" fill="white" opacity="0.4" transform="rotate(-30, 8, 7)" />
+                        
+                        <!-- 3. Flashing/Final Images (On Top) -->
+                        <image id="svg-search-img" x="0" y="0" width="24" height="24" preserveAspectRatio="xMidYMid slice" href="" style="opacity: 0;" />
+                    </g>
+                </svg>
+                <div class="heart-glow"></div>
+            </div>
+            
+            <p class="search-instruction">Click the heart to find a special memory... ❤️</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+    <!-- ===================================================
+         ROMANTIC CHAT ROOM - Floating Button & Modal
+         =================================================== -->
+
+    <!-- Floating Chat Button -->
+    <div class="chat-float-btn-container">
+        <button id="chat-float-btn" class="glowing-btn" title="Our Love Chat 💬" aria-label="Open Chat">
+            <i class="fas fa-comments"></i>
+            <span class="chat-unread-badge" id="chat-unread-badge">0</span>
+        </button>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chat-modal">
+        <div class="chat-window">
+
+            <!-- Header -->
+            <div class="chat-header">
+                <div class="chat-header-avatars">
+                    <div class="chat-avatar">💗</div>
+                    <div class="chat-avatar">💜</div>
+                </div>
+                <div class="chat-header-info">
+                    <div class="chat-header-title">Nisha &amp; Krishna 💕</div>
+                    <div class="chat-header-status">
+                        <span class="online-dot"></span> Our Love Room
+                    </div>
+                </div>
+                <div style="margin-right: 10px;">
+                    <button id="chat-start-call-btn" title="Voice Call" style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:36px; height:36px; color:white; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                </div>
+                <button id="close-chat-btn" aria-label="Close chat">✕</button>
+            </div>
+
+            <!-- Sender Selector -->
+            <div class="sender-selector">
+                <button class="sender-btn active" id="sender-nisha-btn">💗 I am Nisha</button>
+                <button class="sender-btn" id="sender-krishna-btn">💜 I am Krishna</button>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-empty-state">
+                    <div class="empty-icon">💌</div>
+                    <p>No messages yet...<br>Say something sweet! ❤️</p>
+                </div>
+            </div>
+
+            <!-- Typing area -->
+            <div class="chat-typing" id="chat-typing" style="display:none;">
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <!-- Image preview -->
+                <div class="chat-img-preview" id="chat-img-preview">
+                    <img src="" alt="Preview" id="chat-img-preview-img">
+                    <button class="chat-img-preview-close" id="chat-img-preview-close" title="Remove">✕</button>
+                </div>
+
+                <div class="chat-input-row">
+                    <textarea
+                        id="chat-text-input"
+                        class="chat-text-input"
+                        placeholder="Say something sweet, Nisha 💗..."
+                        rows="1"
+                        maxlength="1000"
+                    ></textarea>
+                    <button class="chat-action-btn chat-img-btn" id="chat-img-btn" title="Share a photo 📷">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button class="chat-action-btn chat-send-btn" id="chat-send-btn" disabled title="Send">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <input type="file" id="chat-img-file-input" accept="image/*" hidden>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Image Lightbox -->
+    <div class="chat-img-lightbox" id="chat-img-lightbox">
+        <span class="chat-img-lightbox-close" id="chat-lbox-close">✕</span>
+        <img src="" alt="Chat photo" id="chat-lbox-img">
+    </div>
+    <!-- Chat Logic -->
+    <script src="chat.js"></script>
+
+</body>
+</html>

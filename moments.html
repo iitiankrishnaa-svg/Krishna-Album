@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nisha & Krishna ❤️ - Moments</title>
+    <!-- Cinematic Film Strip (Left Side) - Color Mode for Moments -->
+    <div class="film-strip-outer film-color">
+        <div class="film-strip-container" id="film-strip-container">
+            <div class="film-overlay"></div>
+            <div class="film-strip" id="film-strip-scroll">
+                <!-- Frames will be injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@300;400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5684348194282572" crossorigin="anonymous"></script>
+
+
+    <!-- Website Icon (Favicon) -->
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <link rel="shortcut icon" href="assets/images/favicon.png">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Password Overlay -->
+    <div id="password-overlay" class="password-overlay">
+        <div class="password-card glass-card glowing-border">
+            <div style="background: rgba(255, 118, 150, 0.1); padding: 8px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; color: var(--deep-red); font-size: 0.9rem; letter-spacing: 1px;">
+                <i class="fas fa-magic"></i> Hint: Try 1 2 3 4 5 6 password
+            </div>
+            <h2 class="romantic-title" style="font-size: 2.8rem; margin-bottom: 5px;">Only For Us ❤️</h2>
+            <p style="color: var(--text-muted); font-weight: 500; font-size: 1.1rem; margin-bottom: 15px;">Please enter our special password</p>
+            <div class="password-input-group">
+                <input type="password" id="secret-password" placeholder="Enter Password...">
+                <button id="unlock-btn" class="glowing-btn"><i class="fas fa-key"></i> Unlock</button>
+            </div>
+
+            <div style="margin: 20px 0; color: var(--text-muted); font-size: 0.9rem; position: relative;">
+                <span style="background: white; padding: 0 10px; z-index: 1; position: relative;">OR</span>
+                <hr style="position: absolute; top: 50%; left: 0; right: 0; border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 0;">
+            </div>
+
+            <button id="get-otp-btn" class="otp-trigger-btn">
+                <i class="fas fa-mobile-alt"></i> Get OTP Access
+            </button>
+
+            <p id="password-error" class="password-error">Incorrect password, my love. Try again.</p>
+        </div>
+    </div>
+    <!-- Floating Hearts Container -->
+    <div id="hearts-container"></div>
+    
+    <!-- OTP Entry Modal -->
+    <div id="otp-modal" class="modal">
+        <div class="modal-content glass-card">
+            <span class="close-modal" id="close-otp">&times;</span>
+            <h2 class="otp-title romantic-title">OTP Verification</h2>
+            <p style="color: rgba(255,255,255,0.7);">Enter the 6-digit code sent to Krishna's phone.</p>
+            
+            <div class="otp-input-wrapper">
+                <input type="text" id="otp-code" maxlength="6" placeholder="0 0 0 0 0 0">
+                <button id="verify-otp-btn" class="glowing-btn">Verify & Unlock</button>
+            </div>
+            
+            <p id="otp-error" class="password-error" style="color: #ff5252;">Invalid OTP! Please try again.</p>
+        </div>
+    </div>
+    <div id="recaptcha-container"></div>
+
+    <!-- Temporary Session Timer -->
+    <div id="otp-timer" class="otp-timer-badge">
+        <i class="fas fa-clock"></i> Session: <span id="timer-countdown">05:00</span>
+    </div>
+    
+    <!-- Instagram Selection Modal -->
+    <div id="insta-modal" class="modal">
+        <div class="modal-content glass-card glowing-border">
+            <span class="close-modal" id="close-insta">&times;</span>
+            <h2 class="romantic-title" style="font-size: 2.8rem; margin-bottom: 5px;">Follow Our Lives</h2>
+            <p style="color: var(--text-muted); font-weight: 500;">Whose profile would you like to visit?</p>
+            <div class="insta-links">
+                <a href="https://www.instagram.com/er.nishakumari" target="_blank" class="insta-btn nisha-insta">
+                    <i class="fab fa-instagram"></i> Follow Nisha
+                </a>
+                <a href="https://www.instagram.com/kumar.krishna.patel/" target="_blank" class="insta-btn krishna-insta">
+                    <i class="fab fa-instagram"></i> Follow Krishna
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="glass-nav">
+        <div class="nav-brand">
+            <img src="assets/images/favicon.png" alt="Icon" class="brand-icon">
+            Nisha<span>Krishna</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html#home"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="moments.html#moments"><i class="fas fa-heart"></i> Moments</a></li>
+            <li><a href="memory.html#gallery"><i class="fas fa-images"></i> Gallery</a></li>
+            <li><a href="album.html"><i class="fas fa-book-open"></i> Album</a></li>
+            <li><a href="videos.html#videos"><i class="fas fa-video"></i> Videos</a></li>
+            <li><a href="diary.html#diary"><i class="fas fa-pen-fancy"></i> Diary</a></li>
+        </ul>
+        <div class="nav-toggle" id="nav-toggle">
+            <i class="fas fa-bars"></i>
+        </div>
+    </nav>
+
+<!-- Carousel Section (Moments) -->
+    <section id="moments" class="section scroll-reveal" style="min-height: 80vh; display: flex; align-items: center;">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Sweetest Memories</h2>
+                <div class="title-underline"></div>
+                <p class="section-desc">Our most precious times recorded forever in our heart.</p>
+            </div>
+            
+            <div class="carousel-container">
+                <div class="carousel-track" id="carousel-track">
+                    <!-- Slides -->
+                    <div class="carousel-slide current-slide">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTIxODA0ODg2X0hEUi5qcGc=" alt="Magical Evenings">
+                        <div class="date-badge carousel-date">Dec 17, 2025</div>
+                        <div class="slide-overlay">
+                            <h3>Magical Evenings</h3>
+                            <p>Hand in hand, forever and always.</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTc0NzAxNTk3X0hEUi5qcGc=" alt="Surprises">
+                        <div class="date-badge carousel-date">Dec 17, 2025</div>
+                        <div class="slide-overlay">
+                            <h3>Surprises</h3>
+                            <p>You always know how to make me smile!</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNTEyMTdfMTgxNjA1MjcwX0hEUi5qcGc=" alt="Blossoming Love">
+                        <div class="date-badge carousel-date">Dec 17, 2025</div>
+                        <div class="slide-overlay">
+                            <h3>Blossoming Love</h3>
+                            <p>Like a flower, our love keeps growing.</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <img data-protected-src="YXNzZXRzL2ltYWdlcy9JTUdfMjAyNjAyMTFfMjEyNDQwNDgzX0hEUi5qcGc=" alt="Secret Notes">
+                        <div class="date-badge carousel-date">Feb 11, 2026</div>
+                        <div class="slide-overlay">
+                            <h3>Secret Notes</h3>
+                            <p>Words are not enough to express my love.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="carousel-button carousel-button-left" id="carousel-left">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel-button carousel-button-right" id="carousel-right">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                
+                <div class="carousel-nav" id="carousel-nav">
+                    <button class="carousel-indicator current-indicator"></button>
+                    <button class="carousel-indicator"></button>
+                    <button class="carousel-indicator"></button>
+                    <button class="carousel-indicator"></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- Floating Music Player -->
+    <div class="music-player">
+        <audio id="bg-music" autoplay loop>
+            <source src="assets/music/moment.mp3" type="audio/mpeg">
+        </audio>
+        <button id="music-btn" class="glowing-btn" title="Play Music">
+            <i class="fas fa-music"></i>
+        </button>
+    </div>
+
+<!-- Footer -->
+    <footer>
+        <div class="container text-center">
+            <div class="footer-hearts">
+                <i class="fas fa-heart"></i>
+                <i class="fas fa-heart"></i>
+                <i class="fas fa-heart"></i>
+            </div>
+            <h3 class="romantic-title" style="font-size: 2.5rem; margin: 15px 0;">Nisha & Krishna</h3>
+            <p>Made with endless love and a million kisses 😘</p>
+            <p class="copyright">&copy; 2026 For My Babu. Forever & Always.</p>
+        </div>
+    </footer>
+
+    <!-- Magic Heart Search Modal -->
+    <div id="heart-search-modal" class="heart-search-modal">
+        <div class="search-modal-content">
+            <span class="close-search-modal" id="close-search-modal">&times;</span>
+            
+            <div class="magic-heart-container" id="trigger-search">
+                <svg class="magic-heart-svg magic-heart-idle" id="magic-heart-svg" viewBox="0 0 24 24">
+                    <defs>
+                        <!-- 3D Bulge Gradient -->
+                        <radialGradient id="heart3D" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+                            <stop offset="0%" stop-color="#ff9eb3" />
+                            <stop offset="60%" stop-color="#ff4b6a" />
+                            <stop offset="100%" stop-color="#8b0020" />
+                        </radialGradient>
+                        
+                        <clipPath id="heart-clip-v2">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </clipPath>
+                    </defs>
+                    <g clip-path="url(#heart-clip-v2)">
+                        <!-- 1. Main Bulging Body -->
+                        <rect width="24" height="24" fill="url(#heart3D)" id="heart-body" />
+                        
+                        <!-- 2. Reflection Highlight (Behind the image) -->
+                        <ellipse cx="8" cy="7" rx="4" ry="2" fill="white" opacity="0.4" transform="rotate(-30, 8, 7)" />
+                        
+                        <!-- 3. Flashing/Final Images (On Top) -->
+                        <image id="svg-search-img" x="0" y="0" width="24" height="24" preserveAspectRatio="xMidYMid slice" href="" style="opacity: 0;" />
+                    </g>
+                </svg>
+                <div class="heart-glow"></div>
+            </div>
+            
+            <p class="search-instruction">Click the heart to find a special memory... ❤️</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+    <!-- ===================================================
+         ROMANTIC CHAT ROOM - Floating Button & Modal
+         =================================================== -->
+
+    <!-- Floating Chat Button -->
+    <div class="chat-float-btn-container">
+        <button id="chat-float-btn" class="glowing-btn" title="Our Love Chat 💬" aria-label="Open Chat">
+            <i class="fas fa-comments"></i>
+            <span class="chat-unread-badge" id="chat-unread-badge">0</span>
+        </button>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chat-modal">
+        <div class="chat-window">
+
+            <!-- Header -->
+            <div class="chat-header">
+                <div class="chat-header-avatars">
+                    <div class="chat-avatar">💗</div>
+                    <div class="chat-avatar">💜</div>
+                </div>
+                <div class="chat-header-info">
+                    <div class="chat-header-title">Nisha &amp; Krishna 💕</div>
+                    <div class="chat-header-status">
+                        <span class="online-dot"></span> Our Love Room
+                    </div>
+                </div>
+                <div style="margin-right: 10px;">
+                    <button id="chat-start-call-btn" title="Voice Call" style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:36px; height:36px; color:white; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                </div>
+                <button id="close-chat-btn" aria-label="Close chat">✕</button>
+            </div>
+
+            <!-- Sender Selector -->
+            <div class="sender-selector">
+                <button class="sender-btn active" id="sender-nisha-btn">💗 I am Nisha</button>
+                <button class="sender-btn" id="sender-krishna-btn">💜 I am Krishna</button>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-empty-state">
+                    <div class="empty-icon">💌</div>
+                    <p>No messages yet...<br>Say something sweet! ❤️</p>
+                </div>
+            </div>
+
+            <!-- Typing area -->
+            <div class="chat-typing" id="chat-typing" style="display:none;">
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <!-- Image preview -->
+                <div class="chat-img-preview" id="chat-img-preview">
+                    <img src="" alt="Preview" id="chat-img-preview-img">
+                    <button class="chat-img-preview-close" id="chat-img-preview-close" title="Remove">✕</button>
+                </div>
+
+                <div class="chat-input-row">
+                    <textarea
+                        id="chat-text-input"
+                        class="chat-text-input"
+                        placeholder="Say something sweet, Nisha 💗..."
+                        rows="1"
+                        maxlength="1000"
+                    ></textarea>
+                    <button class="chat-action-btn chat-img-btn" id="chat-img-btn" title="Share a photo 📷">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button class="chat-action-btn chat-send-btn" id="chat-send-btn" disabled title="Send">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <input type="file" id="chat-img-file-input" accept="image/*" hidden>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Image Lightbox -->
+    <div class="chat-img-lightbox" id="chat-img-lightbox">
+        <span class="chat-img-lightbox-close" id="chat-lbox-close">✕</span>
+        <img src="" alt="Chat photo" id="chat-lbox-img">
+    </div>
+    <!-- Chat Logic -->
+    <script src="chat.js"></script>
+
+</body>
+</html>
