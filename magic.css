@@ -90,6 +90,20 @@
     text-shadow: 0 0 15px #ff5500, 0 0 30px #ff5500, 0 0 45px #ff5500;
     transform: scale(1.15) translateY(-10px) rotate(-4deg);
 }
+.magic-title span:nth-child(6):hover {
+    color: #b533ff;
+    background: none;
+    -webkit-text-fill-color: #b533ff;
+    text-shadow: 0 0 15px #b533ff, 0 0 30px #b533ff, 0 0 45px #b533ff;
+    transform: scale(1.15) translateY(-10px) rotate(4deg);
+}
+.magic-title span:nth-child(7):hover {
+    color: #ff0066;
+    background: none;
+    -webkit-text-fill-color: #ff0066;
+    text-shadow: 0 0 15px #ff0066, 0 0 30px #ff0066, 0 0 45px #ff0066;
+    transform: scale(1.15) translateY(-10px) rotate(-5deg);
+}
 
 @keyframes shineText {
     to {
