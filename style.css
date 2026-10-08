@@ -218,12 +218,10 @@ ul {
     justify-content: space-between;
     align-items: center;
     z-index: 1000;
-    background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
+    background: #11050a; /* Solid dark background */
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 50px;
-    box-shadow: var(--shadow-soft);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     transition: all 0.3s ease;
 }
 
@@ -987,13 +985,12 @@ footer {
     .nav-links {
         position: absolute;
         top: 100%; left: 0; right: 0;
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px);
+        background: #11050a;
         flex-direction: column;
         align-items: center;
         padding: 20px 0;
         border-radius: 20px;
-        box-shadow: var(--shadow-strong);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.8);
         clip-path: circle(0 at 90% -10%);
         transition: clip-path 0.5s ease-out;
     }
