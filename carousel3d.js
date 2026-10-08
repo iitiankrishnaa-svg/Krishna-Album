@@ -169,7 +169,9 @@ function init3DCarousel() {
     });
 
     // 4. Interaction & Controls
-    let autoRotateSpeed = 0.002;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let autoRotateSpeed = prefersReducedMotion ? 0 : 0.002;
+    
     let isDragging = false;
     let previousX = 0;
     let previousY = 0;
