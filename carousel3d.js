@@ -356,19 +356,27 @@ function init3DCarousel() {
                 mesh.position.y = THREE.MathUtils.lerp(mesh.position.y, 0, 0.1);
             }
             
-            // Depth fading (re-using single vector to prevent GC spikes)
+            // Depth & Edge fading
             mesh.getWorldPosition(tempVector);
             
-            let depthOpacity = 1.0;
-            if (tempVector.z < 0) {
-                // Image is moving to the back hemisphere
-                depthOpacity = 1.0 - (Math.abs(tempVector.z) / radius) * 0.6; // dims back images
+            // normalizedZ goes from 1 (front) to 0 (sides) to -1 (back)
+            let normalizedZ = tempVector.z / radius;
+            
+            // At front (1.0), opacity is 1.0. At sides (0.0), opacity is 0.3. At back (-1.0), opacity is 0.1.
+            let depthOpacity = 0.1;
+            if (normalizedZ > 0) {
+                // Front hemisphere: fade from 1.0 down to 0.3 at the edges
+                depthOpacity = 0.3 + 0.7 * normalizedZ;
+            } else {
+                // Back hemisphere: fade from 0.3 down to 0.05
+                depthOpacity = 0.05 + 0.25 * (1 + normalizedZ);
             }
             
-            if (mesh.material.map && mesh.material.opacity > 0.1) {
+            // Only apply depth fading if the texture has loaded and initial GSAP fade-in has given it some opacity
+            if (mesh.material.map && mesh.material.opacity > 0.01) {
                 // Avoid redundant assignments if closely matching
                 const diff = Math.abs(mesh.material.opacity - depthOpacity);
-                if(diff > 0.01) {
+                if(diff > 0.005) {
                     mesh.material.opacity = THREE.MathUtils.lerp(mesh.material.opacity, depthOpacity, 0.1);
                 }
             }
