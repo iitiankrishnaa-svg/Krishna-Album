@@ -8,30 +8,69 @@ function init3DCarousel() {
     container.style.touchAction = 'pan-y';
 
     // 1. Extract Data
-    const dataSource = document.getElementById('globe-data-source');
-    if(!dataSource) return;
-    const slides = dataSource.querySelectorAll('.carousel-slide');
     const slideData = [];
-
-    slides.forEach(slide => {
-        const img = slide.querySelector('img');
-        if(!img) return;
-        
-        let src = img.getAttribute('src');
-        if (!src && img.getAttribute('data-protected-src')) {
-            try { src = atob(img.getAttribute('data-protected-src')); } catch(e){}
-        }
-        
-        const titleEl = slide.querySelector('h3');
-        const descEl = slide.querySelector('p');
-        const dateEl = slide.querySelector('.carousel-date');
-        
-        slideData.push({
-            src: src,
-            title: titleEl ? titleEl.textContent : '',
-            desc: descEl ? descEl.textContent : '',
-            date: dateEl ? dateEl.textContent : ''
+    
+    // a) From HTML
+    const dataSource = document.getElementById('globe-data-source');
+    if(dataSource) {
+        const slides = dataSource.querySelectorAll('.carousel-slide');
+        slides.forEach(slide => {
+            const img = slide.querySelector('img');
+            if(!img) return;
+            
+            let src = img.getAttribute('src');
+            if (!src && img.getAttribute('data-protected-src')) {
+                try { src = atob(img.getAttribute('data-protected-src')); } catch(e){}
+            }
+            
+            const titleEl = slide.querySelector('h3');
+            const descEl = slide.querySelector('p');
+            const dateEl = slide.querySelector('.carousel-date');
+            
+            if(src) {
+                slideData.push({
+                    src: src,
+                    title: titleEl ? titleEl.textContent : 'Memory',
+                    desc: descEl ? descEl.textContent : '',
+                    date: dateEl ? dateEl.textContent : ''
+                });
+            }
         });
+    }
+
+    // b) From Global Array (_rawMemories)
+    if (typeof _rawMemories !== 'undefined' && Array.isArray(_rawMemories)) {
+        _rawMemories.forEach(encoded => {
+            try {
+                const src = atob(encoded);
+                if (!slideData.find(d => d.src === src)) {
+                    slideData.push({
+                        src: src,
+                        title: 'Sweet Memory',
+                        desc: 'A precious moment forever recorded in our hearts.',
+                        date: ''
+                    });
+                }
+            } catch(e) {}
+        });
+    }
+
+    // c) From Uploaded Gallery (nisha_updates)
+    const updatesList = JSON.parse(localStorage.getItem('nisha_updates')) || [];
+    updatesList.forEach(update => {
+        if (update.url && !slideData.find(d => d.src === update.url)) {
+            let dateStr = '';
+            if (update.date) {
+                const d = new Date(update.date);
+                dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+            slideData.push({
+                src: update.url,
+                title: 'Uploaded Memory',
+                desc: update.caption || 'A beautifully shared moment.',
+                date: dateStr
+            });
+        }
     });
 
     if (slideData.length === 0) return;
@@ -39,7 +78,7 @@ function init3DCarousel() {
     // 2. Three.js Setup
     const scene = new THREE.Scene();
     
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 500);
     camera.position.z = 9; // Stepped back slightly for better mobile fit
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -68,6 +107,14 @@ function init3DCarousel() {
     }
 
     const radius = Math.max(3.5, displayData.length * 0.45);
+    
+    // Update camera to always be comfortably outside the globe, regardless of how many photos exist!
+    let baseCameraZ = radius + 5.5;
+    if(window.innerWidth < 768) {
+        baseCameraZ = radius + 8.5; // Step back further on mobile
+    }
+    camera.position.z = baseCameraZ;
+    
     const textureLoader = new THREE.TextureLoader();
     const meshes = [];
 
@@ -265,11 +312,11 @@ function init3DCarousel() {
         camera.updateProjectionMatrix();
         renderer.setSize(w, h);
         
-        // Adjust camera distance for mobile so sphere isn't too huge
+        // Adjust camera distance dynamically for responsiveness
         if(window.innerWidth < 768) {
-            camera.position.z = 12;
+            camera.position.z = radius + 8.5;
         } else {
-            camera.position.z = 9;
+            camera.position.z = radius + 5.5;
         }
     });
     
