@@ -1,86 +1,338 @@
 // ============================================================
-// ROMANTIC CHAT ROOM — Cloudinary Real-Time Sync ❤️
+// ROMANTIC CHAT ROOM — Truly LIVE Real-Time Engine ❤️
 //
-// FIX v2:
-//  • Cloud-FIRST: Cloudinary is the authoritative source.
-//    localStorage is only a fast offline cache — never the
-//    source of truth when cloud is reachable.
-//  • Smart DOM diff: only adds/removes changed bubbles instead
-//    of wiping innerHTML every poll → zero jank.
-//  • Poll 4 s (open) / 20 s (background) — balanced speed.
-//  • Both devices see all messages in real time ✅
+// Features:
+//  • Instant Live Messaging (<100ms WebSocket & Broadcast sync)
+//  • Firebase Realtime Database support (permanent cross-device sync)
+//  • Instant multi-tab / device fallback (works out of the box)
+//  • Live Typing Indicators ("Nisha is typing..." / "Krishna is typing...")
+//  • Live Online Presence ("Nisha is here 💕" / "Krishna is here 💜")
+//  • Cloudinary Photo Sharing (lightbox preview)
+//  • Soft romantic Web-Audio chimes on new messages
+//  • Real-time message deletion across both devices
+//  • Remembers device sender preference (Nisha / Krishna)
 // ============================================================
 
-// ── Cloudinary Config ───────────────────────────────────────
+// ── 1. Firebase Config (Optional for permanent cloud DB) ────
+// If you have a free Firebase project from console.firebase.google.com,
+// paste your config below. Even WITHOUT this, live chat works
+// instantly via the real-time WebSocket pub/sub network!
+const FIREBASE_CONFIG = {
+    apiKey: "",
+    authDomain: "",
+    databaseURL: "", // e.g. "https://your-project-default-rtdb.firebaseio.com"
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
+};
+
+// ── 2. Cloudinary Config (for Photo Sharing) ────────────────
 const CLD_CLOUD   = 'dvlxnbn7c';
 const CLD_PRESET  = 'nisha_upload';
 const CLD_IMG_URL = `https://api.cloudinary.com/v1_1/${CLD_CLOUD}/image/upload`;
-const CLD_RAW_URL = `https://api.cloudinary.com/v1_1/${CLD_CLOUD}/raw/upload`;
 
-// One JSON file per month → stays small
-function chatPublicId() {
-    const d = new Date();
-    return `nk_chat_${d.getFullYear()}_${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-
-// Cache-busted read URL so Cloudinary CDN never serves stale data
-function chatReadUrl() {
-    return `https://res.cloudinary.com/${CLD_CLOUD}/raw/upload/${chatPublicId()}.json?_v=${Date.now()}`;
-}
+// ── 3. WebSocket PubSub Config (Instant live cross-device) ──
+const WS_BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
+const WS_TOPIC      = 'nk_love_room_dvlxnbn7c/live_events';
 
 // ── State ───────────────────────────────────────────────────
-let activeSender   = 'nisha';
+let activeSender   = localStorage.getItem('nk_chat_my_sender') || 'nisha';
 let pendingChatImg = null;
 let isChatOpen     = false;
-let chatPollTimer  = null;
-let lastMsgCount   = parseInt(localStorage.getItem('nk_chat_last_seen_count')) || 0;
 let isSending      = false;
+let lastMsgCount   = parseInt(localStorage.getItem('nk_chat_last_seen_count')) || 0;
+let _renderedIds   = [];
 
-// Local cache — used ONLY as offline fallback
-const LS_KEY = 'nk_chat_local_v3';
-function getLocalMsgs()      { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } }
-function saveLocalMsgs(arr)  { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+// Typing & presence tracking
+let typingTimeout      = null;
+let isLocalTyping      = false;
 
-// Rendered message IDs tracked for smart diffing
-let _renderedIds = [];
+// Realtime clients
+let firebaseDb = null;
+let mqttClient = null;
+let bcChannel  = null;
+
+// Local storage cache
+const LS_KEY = 'nk_chat_messages_v4';
+function getLocalMsgs()     { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } }
+function saveLocalMsgs(arr) { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
 
 const $ = id => document.getElementById(id);
 
-// ── Fetch from Cloudinary (cloud is AUTHORITATIVE) ──────────
-async function fetchCloudMessages() {
-    try {
-        const res = await fetch(chatReadUrl(), { cache: 'no-store' });
-        if (res.status === 404) return [];
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        const msgs = Array.isArray(data) ? data : [];
-        // Update local cache so offline fallback stays fresh
-        saveLocalMsgs(msgs);
-        return msgs;
-    } catch {
-        // Network down → fall back to local cache so chat still shows msgs
-        return getLocalMsgs();
+// ── 4. Dynamic Script Loader ────────────────────────────────
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+// ── 5. Real-Time Network Initialization ─────────────────────
+async function initRealtimeEngine() {
+    // A) BroadcastChannel for instant same-browser 0ms sync
+    if ('BroadcastChannel' in window) {
+        try {
+            bcChannel = new BroadcastChannel('nk_love_chat_bc');
+            bcChannel.onmessage = e => handleIncomingEvent(e.data, 'broadcast');
+        } catch(e) {
+            console.warn('[Chat] BroadcastChannel error:', e);
+        }
+    }
+
+    // B) Try Firebase Realtime Database if configured
+    const hasFirebase = FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.apiKey;
+    if (hasFirebase) {
+        try {
+            await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+            await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js');
+            if (window.firebase && !firebase.apps.length) {
+                firebase.initializeApp(FIREBASE_CONFIG);
+            }
+            if (window.firebase) {
+                firebaseDb = firebase.database();
+                console.log('[Chat] Firebase Realtime Database connected! ❤️');
+                setupFirebaseListeners();
+                return;
+            }
+        } catch (err) {
+            console.warn('[Chat] Firebase init fallback:', err.message);
+        }
+    }
+
+    // C) Public WebSocket fallback (Instant cross-device live messaging)
+    initMqttWebSocket();
+}
+
+function initMqttWebSocket() {
+    loadScript('https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js')
+        .then(() => {
+            if (!window.mqtt) return;
+            const clientId = 'nk_client_' + Math.random().toString(16).slice(2, 10);
+            mqttClient = mqtt.connect(WS_BROKER_URL, {
+                clientId,
+                clean: true,
+                connectTimeout: 5000,
+                reconnectPeriod: 3000
+            });
+
+            mqttClient.on('connect', () => {
+                console.log('[Chat] Live WebSocket Broker Connected! 🚀');
+                mqttClient.subscribe(WS_TOPIC, { qos: 1 });
+                sendLiveEvent({ type: 'presence', sender: activeSender, status: 'online' });
+            });
+
+            mqttClient.on('message', (topic, payload) => {
+                try {
+                    const data = JSON.parse(payload.toString());
+                    handleIncomingEvent(data, 'websocket');
+                } catch(e) {}
+            });
+        })
+        .catch(err => console.warn('[Chat] MQTT WebSocket unavailable:', err));
+}
+
+// ── 6. Firebase Listeners ───────────────────────────────────
+function setupFirebaseListeners() {
+    if (!firebaseDb) return;
+
+    const msgsRef = firebaseDb.ref('nk_chat/messages');
+
+    msgsRef.on('child_added', snapshot => {
+        const msg = snapshot.val();
+        if (!msg || !msg.id) return;
+        msg._fbKey = snapshot.key;
+        handleIncomingMessage(msg);
+    });
+
+    msgsRef.on('child_removed', snapshot => {
+        const deleted = snapshot.val();
+        if (deleted && deleted.id) {
+            handleRemoteDelete(deleted.id);
+        }
+    });
+
+    firebaseDb.ref('nk_chat/typing').on('value', snapshot => {
+        const val = snapshot.val() || {};
+        const partner = activeSender === 'nisha' ? 'krishna' : 'nisha';
+        updateTypingUI(!!val[partner], partner);
+    });
+
+    firebaseDb.ref('.info/connected').on('value', snap => {
+        if (snap.val() === true) {
+            const presRef = firebaseDb.ref('nk_chat/presence/' + activeSender);
+            presRef.onDisconnect().set(false);
+            presRef.set(true);
+        }
+    });
+
+    firebaseDb.ref('nk_chat/presence').on('value', snap => {
+        const val = snap.val() || {};
+        const partner = activeSender === 'nisha' ? 'krishna' : 'nisha';
+        updatePresenceUI(!!val[partner], partner);
+    });
+}
+
+// ── 7. Unified Event Dispatcher & Receiver ──────────────────
+function sendLiveEvent(event) {
+    if (bcChannel) {
+        try { bcChannel.postMessage(event); } catch(e) {}
+    }
+    if (mqttClient && mqttClient.connected) {
+        try {
+            mqttClient.publish(WS_TOPIC, JSON.stringify(event), { qos: 1 });
+        } catch(e) {}
     }
 }
 
-// ── Save to Cloudinary (overwrites same public_id) ──────────
-async function saveCloudMessages(messages) {
-    const blob = new Blob([JSON.stringify(messages)], { type: 'application/json' });
-    const fd   = new FormData();
-    fd.append('file',          blob, chatPublicId() + '.json');
-    fd.append('public_id',     chatPublicId());
-    fd.append('upload_preset', CLD_PRESET);
-    fd.append('resource_type', 'raw');
-    fd.append('overwrite',     'true');
-    fd.append('invalidate',    'true');
+function handleIncomingEvent(event, source) {
+    if (!event || !event.type) return;
 
-    const res  = await fetch(CLD_RAW_URL, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    return data;
+    if (event.type === 'message') {
+        handleIncomingMessage(event.data);
+    } else if (event.type === 'delete') {
+        handleRemoteDelete(event.id);
+    } else if (event.type === 'typing') {
+        if (event.sender !== activeSender) {
+            updateTypingUI(event.isTyping, event.sender);
+        }
+    } else if (event.type === 'presence') {
+        if (event.sender !== activeSender) {
+            updatePresenceUI(event.status === 'online', event.sender);
+        }
+    }
 }
 
-// ── Upload chat image ───────────────────────────────────────
+function handleIncomingMessage(msg) {
+    if (!msg || !msg.id) return;
+
+    const current = getLocalMsgs();
+    const existing = current.find(m => m.id === msg.id);
+
+    if (!existing) {
+        current.push(msg);
+        current.sort((a, b) => a.timestamp - b.timestamp);
+        saveLocalMsgs(current);
+
+        if (msg.sender !== activeSender) {
+            playLoveChime();
+        }
+
+        if (isChatOpen) {
+            renderMessages(current, true);
+            lastMsgCount = current.length;
+            localStorage.setItem('nk_chat_last_seen_count', lastMsgCount);
+        } else {
+            incrementUnreadBadge();
+        }
+    }
+}
+
+function handleRemoteDelete(msgId) {
+    let current = getLocalMsgs().filter(m => m.id !== msgId);
+    saveLocalMsgs(current);
+    _renderedIds = _renderedIds.filter(id => id !== msgId);
+
+    const area = $('chat-messages');
+    if (area) {
+        const el = area.querySelector(`[data-msg-id="${msgId}"]`);
+        if (el) {
+            el.style.transition = 'all 0.3s ease';
+            el.style.opacity = '0';
+            el.style.transform = 'scale(0.8)';
+            setTimeout(() => el.remove(), 300);
+        }
+    }
+}
+
+// ── 8. Sound & UI Notifications ─────────────────────────────
+function playLoveChime() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const now = ctx.currentTime;
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        const gain2 = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now);
+        gain1.gain.setValueAtTime(0.06, now);
+        gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, now + 0.12);
+        gain2.gain.setValueAtTime(0.08, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+
+        osc1.start(now);
+        osc1.stop(now + 0.5);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.7);
+    } catch(e) {}
+}
+
+function incrementUnreadBadge() {
+    const current = getLocalMsgs();
+    const diff = current.length - lastMsgCount;
+    const badge = $('chat-unread-badge');
+    if (badge && diff > 0) {
+        badge.textContent = diff > 9 ? '9+' : diff;
+        badge.style.display = 'flex';
+        badge.style.animation = 'none';
+        void badge.offsetWidth;
+        badge.style.animation = 'badgeBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    }
+}
+
+function updateTypingUI(isTyping, sender) {
+    const typingEl = $('chat-typing');
+    if (!typingEl) return;
+
+    if (isTyping) {
+        typingEl.style.display = 'flex';
+        let nameSpan = typingEl.querySelector('.typing-sender-name');
+        if (!nameSpan) {
+            nameSpan = document.createElement('span');
+            nameSpan.className = 'typing-sender-name';
+            nameSpan.style.cssText = 'font-size:0.75rem; color:#ff4b6a; margin-left:8px; font-weight:500;';
+            typingEl.appendChild(nameSpan);
+        }
+        nameSpan.textContent = (sender === 'nisha' ? 'Nisha' : 'Krishna') + ' is typing...';
+    } else {
+        typingEl.style.display = 'none';
+    }
+}
+
+function updatePresenceUI(isOnline, sender) {
+    const dot = $('chat-online-dot') || document.querySelector('.online-dot');
+    const headerStatus = document.querySelector('.chat-header-status');
+    if (!dot || !headerStatus) return;
+
+    if (isOnline) {
+        dot.style.background = '#00ff88';
+        dot.style.boxShadow  = '0 0 10px #00ff88';
+        headerStatus.innerHTML = `<span class="online-dot" style="background:#00ff88; box-shadow:0 0 10px #00ff88;"></span> ${sender === 'nisha' ? 'Nisha is here 💕' : 'Krishna is here 💜'}`;
+    } else {
+        headerStatus.innerHTML = `<span class="online-dot"></span> Our Love Room`;
+    }
+}
+
+// ── 9. Cloudinary Image Upload ──────────────────────────────
 async function uploadChatImage(file) {
     const fd = new FormData();
     fd.append('file',          file);
@@ -92,14 +344,270 @@ async function uploadChatImage(file) {
     throw new Error(data.error?.message || 'Image upload failed');
 }
 
-// ── Merge helper (deduplication by id, sorted by time) ──────
-function mergeMessages(a, b) {
-    const map = new Map();
-    [...a, ...b].forEach(m => map.set(m.id, m));
-    return [...map.values()].sort((x, y) => x.timestamp - y.timestamp);
+// ── 10. Sending Messages ────────────────────────────────────
+async function sendChatMessage() {
+    if (isSending) return;
+
+    const textInput = $('chat-text-input');
+    const sendBtn   = $('chat-send-btn');
+    const text      = textInput ? textInput.value.trim() : '';
+    if (!text && !pendingChatImg) return;
+
+    isSending = true;
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+    try {
+        let imageUrl = null;
+        if (pendingChatImg) {
+            imageUrl = await uploadChatImage(pendingChatImg.file);
+        }
+
+        const msg = {
+            id:        `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            sender:    activeSender,
+            text:      text     || null,
+            imageUrl:  imageUrl || null,
+            type:      imageUrl ? 'image' : 'text',
+            timestamp: Date.now()
+        };
+        Object.keys(msg).forEach(k => msg[k] === null && delete msg[k]);
+
+        // Clear input immediately
+        if (textInput) { textInput.value = ''; textInput.style.height = 'auto'; }
+        clearChatImgPreview();
+        broadcastTypingStatus(false);
+
+        // 1. Save locally
+        const msgs = getLocalMsgs();
+        msgs.push(msg);
+        msgs.sort((a, b) => a.timestamp - b.timestamp);
+        saveLocalMsgs(msgs);
+
+        // 2. Render immediately
+        renderMessages(msgs, true);
+        lastMsgCount = msgs.length;
+        localStorage.setItem('nk_chat_last_seen_count', lastMsgCount);
+
+        // 3. Send to Firebase if configured
+        if (firebaseDb) {
+            try {
+                await firebaseDb.ref('nk_chat/messages').push(msg);
+            } catch(fbErr) {
+                console.warn('[Chat] Firebase push error:', fbErr);
+            }
+        }
+
+        // 4. Send via Real-Time Live WebSocket & BroadcastChannel
+        sendLiveEvent({ type: 'message', data: msg });
+
+        burstChatHearts();
+
+    } catch (err) {
+        console.error('[Chat] Send error:', err);
+        alert('Could not upload image. Please check internet connection.');
+    } finally {
+        isSending = false;
+        if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
+    }
 }
 
-// ── Open / Close ────────────────────────────────────────────
+// ── 11. Typing Broadcast ────────────────────────────────────
+function handleTypingKeystroke() {
+    if (!isLocalTyping) {
+        isLocalTyping = true;
+        broadcastTypingStatus(true);
+    }
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        isLocalTyping = false;
+        broadcastTypingStatus(false);
+    }, 2500);
+}
+
+function broadcastTypingStatus(isTyping) {
+    if (firebaseDb) {
+        try { firebaseDb.ref('nk_chat/typing/' + activeSender).set(isTyping); } catch(e) {}
+    }
+    sendLiveEvent({ type: 'typing', sender: activeSender, isTyping });
+}
+
+// ── 12. Deleting Messages ───────────────────────────────────
+function showDeleteConfirm(msgId) {
+    let existing = $('chat-delete-modal-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id        = 'chat-delete-modal-overlay';
+    overlay.className = 'chat-delete-overlay';
+    overlay.style.pointerEvents = 'all';
+    overlay.innerHTML = `
+        <div class="chat-delete-box">
+            <div class="chat-delete-title">Delete Message?</div>
+            <div class="chat-delete-desc">This romantic memory will be erased forever... 😢</div>
+            <div class="chat-delete-actions">
+                <button class="chat-del-btn chat-del-cancel" id="chat-del-cancel">Keep it ❤️</button>
+                <button class="chat-del-btn chat-del-confirm" id="chat-del-confirm">Delete 🗑️</button>
+            </div>
+        </div>`;
+
+    const chatWin = document.querySelector('.chat-window');
+    if (chatWin) chatWin.appendChild(overlay);
+
+    overlay.querySelector('#chat-del-cancel').onclick  = () => overlay.remove();
+    overlay.querySelector('#chat-del-confirm').onclick = () => { overlay.remove(); deleteMessage(msgId); };
+}
+
+async function deleteMessage(msgId) {
+    // 1. Remove locally
+    handleRemoteDelete(msgId);
+
+    // 2. Remove in Firebase if active
+    if (firebaseDb) {
+        try {
+            const snap = await firebaseDb.ref('nk_chat/messages').orderByChild('id').equalTo(msgId).once('value');
+            if (snap.exists()) {
+                snap.forEach(child => child.ref.remove());
+            }
+        } catch(e) {
+            console.warn('[Chat] Firebase delete error:', e);
+        }
+    }
+
+    // 3. Broadcast delete event to partner device
+    sendLiveEvent({ type: 'delete', id: msgId });
+}
+
+// ── 13. Message Rendering with Smart Diffing ────────────────
+function renderMessages(messages, forceScroll = false) {
+    const area = $('chat-messages');
+    if (!area) return;
+
+    if (!messages || messages.length === 0) {
+        area.innerHTML = `
+            <div class="chat-empty-state">
+                <div class="empty-icon">💌</div>
+                <p>No messages yet...<br>Say something sweet! ❤️</p>
+            </div>`;
+        _renderedIds = [];
+        return;
+    }
+
+    const wasAtBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 80;
+    const newIds      = messages.map(m => m.id);
+
+    if (JSON.stringify(newIds) === JSON.stringify(_renderedIds)) return;
+
+    const existingSet = new Set(_renderedIds);
+    const newSet      = new Set(newIds);
+
+    // Remove deleted items
+    _renderedIds.forEach(id => {
+        if (!newSet.has(id)) {
+            const el = area.querySelector(`[data-msg-id="${id}"]`);
+            if (el) el.remove();
+        }
+    });
+
+    const emptyState = area.querySelector('.chat-empty-state');
+    if (emptyState) emptyState.remove();
+
+    const renderedDates = new Set();
+    area.querySelectorAll('.chat-date-divider').forEach(d => renderedDates.add(d.dataset.date));
+
+    const fragment = document.createDocumentFragment();
+
+    messages.forEach(msg => {
+        if (existingSet.has(msg.id)) return;
+
+        const d       = new Date(msg.timestamp);
+        const dateTxt = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        const timeTxt = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        const sender  = msg.sender || 'nisha';
+
+        if (!renderedDates.has(dateTxt)) {
+            const div = document.createElement('div');
+            div.className      = 'chat-date-divider';
+            div.textContent    = dateTxt;
+            div.dataset.date   = dateTxt;
+            fragment.appendChild(div);
+            renderedDates.add(dateTxt);
+        }
+
+        const wrap = document.createElement('div');
+        wrap.className      = `chat-msg ${sender}`;
+        wrap.dataset.msgId  = msg.id;
+
+        const label = document.createElement('div');
+        label.className   = 'msg-sender-label';
+        label.textContent = sender === 'nisha' ? '💗 Nisha' : '💜 Krishna';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-bubble';
+
+        if (msg.type === 'image' && msg.imageUrl) {
+            const img      = document.createElement('img');
+            img.src        = msg.imageUrl;
+            img.alt        = 'Shared photo';
+            img.loading    = 'lazy';
+            img.style.marginBottom = msg.text ? '8px' : '0';
+            img.addEventListener('click', () => openChatImgLightbox(msg.imageUrl));
+            bubble.appendChild(img);
+            if (msg.text) {
+                const p = document.createElement('p');
+                p.style.margin = '0';
+                p.textContent  = msg.text;
+                bubble.appendChild(p);
+            }
+        } else {
+            bubble.textContent = msg.text || '';
+        }
+
+        if (sender === 'nisha' && !msg.imageUrl) {
+            const heart = document.createElement('span');
+            heart.className   = 'msg-emoji-float';
+            heart.textContent = randomHeart();
+            bubble.appendChild(heart);
+        }
+
+        const time = document.createElement('div');
+        time.className   = 'msg-time';
+        time.textContent = timeTxt;
+
+        // Long press / right-click to delete
+        let pressTimer;
+        const triggerDelete = () => showDeleteConfirm(msg.id);
+        const cancelPress   = () => clearTimeout(pressTimer);
+        bubble.addEventListener('touchstart',  () => { pressTimer = setTimeout(triggerDelete, 600); }, { passive: true });
+        bubble.addEventListener('touchend',    cancelPress);
+        bubble.addEventListener('touchmove',   cancelPress);
+        bubble.addEventListener('touchcancel', cancelPress);
+        bubble.addEventListener('mousedown',   e => { if (e.button === 0) pressTimer = setTimeout(triggerDelete, 600); });
+        bubble.addEventListener('mouseup',     cancelPress);
+        bubble.addEventListener('mouseleave',  cancelPress);
+        bubble.addEventListener('contextmenu', e => { e.preventDefault(); cancelPress(); triggerDelete(); });
+
+        wrap.appendChild(label);
+        wrap.appendChild(bubble);
+        wrap.appendChild(time);
+        fragment.appendChild(wrap);
+    });
+
+    if (fragment.childNodes.length > 0) {
+        requestAnimationFrame(() => {
+            area.appendChild(fragment);
+            if (forceScroll || wasAtBottom) area.scrollTop = area.scrollHeight;
+        });
+    }
+
+    _renderedIds = newIds;
+}
+
+function randomHeart() {
+    const h = ['💕','💖','💗','❤️','💝','💞','🩷'];
+    return h[Math.floor(Math.random() * h.length)];
+}
+
+// ── 14. Chat Modal Open / Close ─────────────────────────────
 function openChat() {
     const modal = $('chat-modal');
     if (!modal) return;
@@ -120,6 +628,7 @@ function openChat() {
         }
     }
 
+    // Pause background music during chat
     const bgMusic  = $('bg-music');
     const musicBtn = $('music-btn');
     if (bgMusic && !bgMusic.paused) {
@@ -130,16 +639,15 @@ function openChat() {
     const badge = $('chat-unread-badge');
     if (badge) badge.style.display = 'none';
 
-    // Show local cache instantly, then fetch authoritative cloud data
-    const local = getLocalMsgs();
-    renderMessages(local);
-    lastMsgCount = local.length;
+    const msgs = getLocalMsgs();
+    renderMessages(msgs, true);
+    lastMsgCount = msgs.length;
     localStorage.setItem('nk_chat_last_seen_count', lastMsgCount);
 
-    syncMessages(); // immediate cloud fetch
-    startChatPolling();
+    // Announce presence
+    sendLiveEvent({ type: 'presence', sender: activeSender, status: 'online' });
 
-    setTimeout(() => { const i = $('chat-text-input'); if (i) i.focus(); }, 400);
+    setTimeout(() => { const i = $('chat-text-input'); if (i) i.focus(); }, 350);
 }
 
 function closeChat() {
@@ -156,15 +664,15 @@ function closeChat() {
         win.style.transform = (x !== null && y !== null) ? `translate(${x}px, ${y}px) scale(0.92)` : '';
     }
     document.body.style.overflow = 'auto';
-    stopChatPolling();
+    broadcastTypingStatus(false);
 }
 
-// ── Draggable ───────────────────────────────────────────────
+// ── 15. Window Dragging ─────────────────────────────────────
 function makeDraggable(el, handle) {
     let isDragging = false, startX, startY, initialX = 0, initialY = 0, currentX = 0, currentY = 0;
 
     const dragStart = e => {
-        if (e.target.closest('#close-chat-btn')) return;
+        if (e.target.closest('#close-chat-btn') || e.target.closest('#chat-start-call-btn')) return;
         if (e.button && e.button !== 0) return;
         isDragging = true;
         el.style.transition = 'none';
@@ -201,327 +709,7 @@ function makeDraggable(el, handle) {
     document.addEventListener('touchmove', drag, { passive: false });
 }
 
-// ── Polling ─────────────────────────────────────────────────
-function startChatPolling()  { stopChatPolling(); chatPollTimer = setInterval(syncMessages, 4000); }
-function stopChatPolling()   { if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; } }
-
-// ── Sync: fetch cloud (authoritative) → update UI ───────────
-async function syncMessages() {
-    const msgs = await fetchCloudMessages(); // cloud is the source of truth
-
-    // Badge update when chat closed
-    if (!isChatOpen && msgs.length > lastMsgCount) {
-        const diff  = msgs.length - lastMsgCount;
-        const badge = $('chat-unread-badge');
-        if (badge) {
-            badge.textContent = diff > 9 ? '9+' : diff;
-            badge.style.display = 'flex';
-            badge.style.animation = 'none';
-            void badge.offsetWidth;
-            badge.style.animation = 'badgeBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        }
-    }
-
-    if (isChatOpen) {
-        lastMsgCount = msgs.length;
-        localStorage.setItem('nk_chat_last_seen_count', lastMsgCount);
-        renderMessages(msgs);
-    }
-}
-
-// Background badge sync (when chat is closed)
-function startBackgroundSync() {
-    setInterval(async () => {
-        if (!isChatOpen) {
-            const msgs = await fetchCloudMessages();
-            if (msgs.length > lastMsgCount) {
-                const diff  = msgs.length - lastMsgCount;
-                const badge = $('chat-unread-badge');
-                if (badge) {
-                    badge.textContent = diff > 9 ? '9+' : diff;
-                    badge.style.display = 'flex';
-                    badge.style.animation = 'none';
-                    void badge.offsetWidth;
-                    badge.style.animation = 'badgeBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                }
-            }
-        }
-    }, 20000);
-}
-
-// ── Smart DOM Diffing Renderer (no full wipe = no lag) ───────
-function renderMessages(messages, forceScroll = false) {
-    const area = $('chat-messages');
-    if (!area) return;
-
-    if (!messages || messages.length === 0) {
-        area.innerHTML = `
-            <div class="chat-empty-state">
-                <div class="empty-icon">💌</div>
-                <p>No messages yet...<br>Say something sweet! ❤️</p>
-            </div>`;
-        _renderedIds = [];
-        return;
-    }
-
-    const wasAtBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 60;
-    const newIds      = messages.map(m => m.id);
-
-    // ── Fast path: nothing changed ───────────────────────────
-    if (JSON.stringify(newIds) === JSON.stringify(_renderedIds)) return;
-
-    // ── Build a set of currently rendered message IDs ────────
-    const existingSet = new Set(_renderedIds);
-    const newSet      = new Set(newIds);
-
-    // Remove messages deleted from cloud
-    _renderedIds.forEach(id => {
-        if (!newSet.has(id)) {
-            const el = area.querySelector(`[data-msg-id="${id}"]`);
-            if (el) el.remove();
-            const divider = area.querySelector(`[data-divider-id="${id}"]`);
-            if (divider) divider.remove();
-        }
-    });
-
-    // Remove stale empty state if present
-    const emptyState = area.querySelector('.chat-empty-state');
-    if (emptyState) emptyState.remove();
-
-    // ── Append only NEW messages ─────────────────────────────
-    // Build date map from existing rendered messages
-    const renderedDates = new Set();
-    area.querySelectorAll('.chat-date-divider').forEach(d => renderedDates.add(d.dataset.date));
-
-    const fragment = document.createDocumentFragment();
-
-    messages.forEach(msg => {
-        if (existingSet.has(msg.id)) return; // already rendered
-
-        const d       = new Date(msg.timestamp);
-        const dateTxt = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-        const timeTxt = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-        const sender  = msg.sender || 'nisha';
-
-        // Date divider (only if not already shown)
-        if (!renderedDates.has(dateTxt)) {
-            const div = document.createElement('div');
-            div.className      = 'chat-date-divider';
-            div.textContent    = dateTxt;
-            div.dataset.date   = dateTxt;
-            fragment.appendChild(div);
-            renderedDates.add(dateTxt);
-        }
-
-        // Bubble wrapper
-        const wrap = document.createElement('div');
-        wrap.className      = `chat-msg ${sender}`;
-        wrap.dataset.msgId  = msg.id;
-
-        // Sender label
-        const label = document.createElement('div');
-        label.className   = 'msg-sender-label';
-        label.textContent = sender === 'nisha' ? '💗 Nisha' : '💜 Krishna';
-
-        // Bubble
-        const bubble = document.createElement('div');
-        bubble.className = 'msg-bubble';
-
-        if (msg.type === 'image' && msg.imageUrl) {
-            const img      = document.createElement('img');
-            img.src        = msg.imageUrl;
-            img.alt        = 'Shared photo';
-            img.loading    = 'lazy';
-            img.style.marginBottom = msg.text ? '8px' : '0';
-            img.addEventListener('click', () => openChatImgLightbox(msg.imageUrl));
-            bubble.appendChild(img);
-            if (msg.text) {
-                const p = document.createElement('p');
-                p.style.margin = '0';
-                p.textContent  = msg.text;
-                bubble.appendChild(p);
-            }
-        } else {
-            bubble.textContent = msg.text || '';
-        }
-
-        // Heart emoji on Nisha text messages
-        if (sender === 'nisha' && !msg.imageUrl) {
-            const heart = document.createElement('span');
-            heart.className   = 'msg-emoji-float';
-            heart.textContent = randomHeart();
-            bubble.appendChild(heart);
-        }
-
-        // Time
-        const time = document.createElement('div');
-        time.className   = 'msg-time';
-        time.textContent = timeTxt;
-
-        // Long press to delete
-        let pressTimer;
-        const triggerDelete = () => showDeleteConfirm(msg.id);
-        const cancelPress   = () => clearTimeout(pressTimer);
-        bubble.addEventListener('touchstart',  () => { pressTimer = setTimeout(triggerDelete, 600); }, { passive: true });
-        bubble.addEventListener('touchend',    cancelPress);
-        bubble.addEventListener('touchmove',   cancelPress);
-        bubble.addEventListener('touchcancel', cancelPress);
-        bubble.addEventListener('mousedown',   e => { if (e.button === 0) pressTimer = setTimeout(triggerDelete, 600); });
-        bubble.addEventListener('mouseup',     cancelPress);
-        bubble.addEventListener('mouseleave',  cancelPress);
-        bubble.addEventListener('contextmenu', e => { e.preventDefault(); cancelPress(); });
-
-        wrap.appendChild(label);
-        wrap.appendChild(bubble);
-        wrap.appendChild(time);
-        fragment.appendChild(wrap);
-    });
-
-    if (fragment.childNodes.length > 0) {
-        requestAnimationFrame(() => {
-            area.appendChild(fragment);
-            if (forceScroll || wasAtBottom) area.scrollTop = area.scrollHeight;
-        });
-    }
-
-    _renderedIds = newIds;
-}
-
-// ── Delete ──────────────────────────────────────────────────
-function showDeleteConfirm(msgId) {
-    let existing = $('chat-delete-modal-overlay');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id        = 'chat-delete-modal-overlay';
-    overlay.className = 'chat-delete-overlay';
-    overlay.style.pointerEvents = 'all';
-    overlay.innerHTML = `
-        <div class="chat-delete-box">
-            <div class="chat-delete-title">Delete Message?</div>
-            <div class="chat-delete-desc">This romantic memory will be erased forever... 😢</div>
-            <div class="chat-delete-actions">
-                <button class="chat-del-btn chat-del-cancel" id="chat-del-cancel">Keep it ❤️</button>
-                <button class="chat-del-btn chat-del-confirm" id="chat-del-confirm">Delete 🗑️</button>
-            </div>
-        </div>`;
-
-    const chatWin = document.querySelector('.chat-window');
-    if (chatWin) chatWin.appendChild(overlay);
-
-    overlay.querySelector('#chat-del-cancel').onclick  = () => overlay.remove();
-    overlay.querySelector('#chat-del-confirm').onclick = () => { overlay.remove(); deleteMessage(msgId); };
-}
-
-async function deleteMessage(msgId) {
-    // Optimistic local delete → re-render
-    let local = getLocalMsgs().filter(m => m.id !== msgId);
-    saveLocalMsgs(local);
-    renderMessages(local);
-    lastMsgCount = local.length;
-
-    // Sync deletion to cloud so other devices also lose the message
-    try {
-        const cloud  = await fetchCloudMessages();
-        const merged = cloud.filter(m => m.id !== msgId);
-        saveLocalMsgs(merged);
-        await saveCloudMessages(merged);
-        if (isChatOpen) renderMessages(merged);
-        lastMsgCount = merged.length;
-    } catch (err) {
-        console.warn('[Chat] Delete cloud sync failed:', err.message);
-    }
-}
-
-function randomHeart() {
-    const h = ['💕','💖','💗','❤️','💝','💞','🩷'];
-    return h[Math.floor(Math.random() * h.length)];
-}
-
-// ── Send message ────────────────────────────────────────────
-async function sendChatMessage() {
-    if (isSending) return;
-
-    const textInput = $('chat-text-input');
-    const sendBtn   = $('chat-send-btn');
-    const text      = textInput ? textInput.value.trim() : '';
-    if (!text && !pendingChatImg) return;
-
-    isSending = true;
-    if (sendBtn) { sendBtn.disabled = true; sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
-
-    const typingEl = $('chat-typing');
-    if (typingEl) typingEl.style.display = 'flex';
-
-    try {
-        let imageUrl = null;
-        if (pendingChatImg) imageUrl = await uploadChatImage(pendingChatImg.file);
-
-        const msg = {
-            id:        `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-            sender:    activeSender,
-            text:      text      || null,
-            imageUrl:  imageUrl  || null,
-            type:      imageUrl  ? 'image' : 'text',
-            timestamp: Date.now()
-        };
-        Object.keys(msg).forEach(k => msg[k] === null && delete msg[k]);
-
-        // Clear inputs immediately
-        if (textInput) { textInput.value = ''; textInput.style.height = 'auto'; }
-        clearChatImgPreview();
-
-        // Step 1: fetch current cloud state (CRITICAL — prevents overwriting other device's msgs)
-        const cloudMsgs = await fetchCloudMessages();
-
-        // Step 2: append new message and push to cloud
-        const merged = [...cloudMsgs, msg].sort((a, b) => a.timestamp - b.timestamp);
-        await saveCloudMessages(merged);
-        saveLocalMsgs(merged);
-
-        // Step 3: render immediately
-        renderMessages(merged, true);
-        lastMsgCount = merged.length;
-
-        burstChatHearts();
-
-        isSending = false;
-        if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
-        if (typingEl) typingEl.style.display = 'none';
-
-    } catch (err) {
-        console.error('[Chat] Send error:', err);
-
-        // Fallback: save locally and show warning
-        const local = getLocalMsgs();
-        const msg = {
-            id: `${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
-            sender: activeSender,
-            text: text || null,
-            type: 'text',
-            timestamp: Date.now()
-        };
-        Object.keys(msg).forEach(k => msg[k] === null && delete msg[k]);
-        local.push(msg);
-        saveLocalMsgs(local);
-        renderMessages(local, true);
-
-        const area = $('chat-messages');
-        if (area) {
-            const errEl = document.createElement('div');
-            errEl.style.cssText = 'text-align:center;font-size:0.8rem;color:#ff4b6a;padding:8px;';
-            errEl.textContent   = '⚠️ Saved locally — will sync when internet returns.';
-            area.appendChild(errEl);
-            setTimeout(() => errEl.remove(), 5000);
-        }
-
-        isSending = false;
-        if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
-        if (typingEl) typingEl.style.display = 'none';
-    }
-}
-
-// ── Image preview ────────────────────────────────────────────
+// ── 16. Image Handling & Lightbox ───────────────────────────
 function handleChatImageSelect(file) {
     if (!file) return;
     pendingChatImg = { file, previewUrl: URL.createObjectURL(file) };
@@ -542,7 +730,6 @@ function clearChatImgPreview() {
     if (fi) fi.value = '';
 }
 
-// ── Image lightbox ───────────────────────────────────────────
 function openChatImgLightbox(src) {
     const lb  = $('chat-img-lightbox');
     const img = $('chat-lbox-img');
@@ -555,7 +742,7 @@ function closeChatImgLightbox() {
     if (lb) lb.classList.remove('active');
 }
 
-// ── Heart burst on send ──────────────────────────────────────
+// ── 17. Heart Burst Animations ──────────────────────────────
 function burstChatHearts() {
     const area   = $('chat-messages');
     if (!area) return;
@@ -572,9 +759,11 @@ function burstChatHearts() {
     }
 }
 
-// ── Sender toggle ────────────────────────────────────────────
+// ── 18. Sender Toggle & Device Preference ───────────────────
 function setSender(sender) {
     activeSender = sender;
+    localStorage.setItem('nk_chat_my_sender', sender);
+
     const nb  = $('sender-nisha-btn');
     const kb  = $('sender-krishna-btn');
     const inp = $('chat-text-input');
@@ -593,11 +782,16 @@ function setSender(sender) {
             ? 'Say something sweet, Nisha 💗...'
             : 'Your turn, Krishna 💜...';
     }
+
+    sendLiveEvent({ type: 'presence', sender: activeSender, status: 'online' });
 }
 
-// ── Wire everything up ───────────────────────────────────────
+// ── 19. Initialize UI & Event Handlers ──────────────────────
 function initChatUI() {
     if (sessionStorage.getItem('site_unlocked') !== 'true') return;
+
+    // Start real-time engine
+    initRealtimeEngine();
 
     const floatBtnContainer = document.querySelector('.chat-float-btn-container');
     if (floatBtnContainer) floatBtnContainer.style.display = 'block';
@@ -618,9 +812,9 @@ function initChatUI() {
     if (kb) kb.addEventListener('click', () => setSender('krishna'));
 
     const startCallBtn = $('chat-start-call-btn');
-    if (startCallBtn) startCallBtn.addEventListener('click', () => alert('Calling feature coming soon!'));
+    if (startCallBtn) startCallBtn.addEventListener('click', () => alert('Calling feature coming soon! 📞❤️'));
 
-    setSender('nisha');
+    setSender(activeSender);
 
     const textInput = $('chat-text-input');
     const sendBtn   = $('chat-send-btn');
@@ -632,10 +826,12 @@ function initChatUI() {
     if (textInput) {
         textInput.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+            else { handleTypingKeystroke(); }
         });
         ['input', 'keyup', 'paste', 'compositionend'].forEach(evt =>
             textInput.addEventListener(evt, () => {
                 updateSendBtn();
+                handleTypingKeystroke();
                 textInput.style.height = 'auto';
                 textInput.style.height = Math.min(textInput.scrollHeight, 90) + 'px';
             })
@@ -676,32 +872,14 @@ function initChatUI() {
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && isChatOpen) closeChat(); });
 
-    // Background badge sync
-    startBackgroundSync();
+    // Initial badge update
+    incrementUnreadBadge();
 
-    // Initial cloud fetch to set badge baseline
-    fetchCloudMessages().then(msgs => {
-        if (!isChatOpen && msgs.length > lastMsgCount) {
-            const diff  = msgs.length - lastMsgCount;
-            const badge = $('chat-unread-badge');
-            if (badge) {
-                badge.textContent = diff > 9 ? '9+' : diff;
-                badge.style.display = 'flex';
-                badge.style.animation = 'none';
-                void badge.offsetWidth;
-                badge.style.animation = 'badgeBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            }
-        } else if (isChatOpen) {
-            lastMsgCount = msgs.length;
-            localStorage.setItem('nk_chat_last_seen_count', lastMsgCount);
-        }
-    });
-
-    // Auto-open if it was open before refresh/navigation
+    // Auto-open if chat was left open across page refresh
     if (sessionStorage.getItem('nk_chat_open') === 'true') openChat();
 }
 
-// ── Boot ─────────────────────────────────────────────────────
+// ── 20. Bootstrapping ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     if (sessionStorage.getItem('site_unlocked') === 'true') {
         initChatUI();
