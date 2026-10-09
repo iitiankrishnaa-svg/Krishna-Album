@@ -33,8 +33,9 @@ const CLD_PRESET  = 'nisha_upload';
 const CLD_IMG_URL = `https://api.cloudinary.com/v1_1/${CLD_CLOUD}/image/upload`;
 
 // ── 3. WebSocket PubSub Config (Instant live cross-device) ──
-const WS_BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
-const WS_TOPIC      = 'nk_love_room_dvlxnbn7c/live_events';
+const WS_BROKER_URL    = 'wss://broker.emqx.io:8084/mqtt';
+const WS_TOPIC         = 'nk_love_room_dvlxnbn7c/live_events';
+const WS_HISTORY_TOPIC = 'nk_love_room_dvlxnbn7c/history';
 
 // ── State ───────────────────────────────────────────────────
 let activeSender   = localStorage.getItem('nk_chat_my_sender') || 'nisha';
@@ -54,9 +55,22 @@ let mqttClient = null;
 let bcChannel  = null;
 
 // Local storage cache
-const LS_KEY = 'nk_chat_messages_v4';
+const LS_KEY     = 'nk_chat_messages_v4';
+const LS_DEL_KEY = 'nk_chat_deleted_ids_v4';
+
 function getLocalMsgs()     { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } }
 function saveLocalMsgs(arr) { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+
+function getDeletedIds()    { try { return JSON.parse(localStorage.getItem(LS_DEL_KEY)) || []; } catch { return []; } }
+function addDeletedId(id)   {
+    try {
+        const arr = getDeletedIds();
+        if (!arr.includes(id)) {
+            arr.push(id);
+            localStorage.setItem(LS_DEL_KEY, JSON.stringify(arr.slice(-100)));
+        }
+    } catch(e) {}
+}
 
 const $ = id => document.getElementById(id);
 
@@ -124,13 +138,19 @@ function initMqttWebSocket() {
             mqttClient.on('connect', () => {
                 console.log('[Chat] Live WebSocket Broker Connected! 🚀');
                 mqttClient.subscribe(WS_TOPIC, { qos: 1 });
+                mqttClient.subscribe(WS_HISTORY_TOPIC, { qos: 1 });
                 sendLiveEvent({ type: 'presence', sender: activeSender, status: 'online' });
+                sendLiveEvent({ type: 'sync_request', sender: activeSender });
             });
 
             mqttClient.on('message', (topic, payload) => {
                 try {
                     const data = JSON.parse(payload.toString());
-                    handleIncomingEvent(data, 'websocket');
+                    if (topic === WS_HISTORY_TOPIC) {
+                        handleHistorySync(data);
+                    } else {
+                        handleIncomingEvent(data, 'websocket');
+                    }
                 } catch(e) {}
             });
         })
@@ -190,13 +210,83 @@ function sendLiveEvent(event) {
     }
 }
 
+function publishRetainedHistory(messages) {
+    if (!mqttClient || !mqttClient.connected) return;
+    try {
+        const list = messages || getLocalMsgs();
+        const payload = JSON.stringify({
+            type: 'history_sync',
+            updatedAt: Date.now(),
+            messages: list.slice(-150),
+            deletedIds: getDeletedIds().slice(-50)
+        });
+        mqttClient.publish(WS_HISTORY_TOPIC, payload, { qos: 1, retain: true });
+    } catch(e) {
+        console.warn('[Chat] History retain publish error:', e);
+    }
+}
+
+function handleHistorySync(historyData) {
+    if (!historyData || !Array.isArray(historyData.messages)) return;
+    const remoteMsgs   = historyData.messages;
+    const remoteDelIds = Array.isArray(historyData.deletedIds) ? historyData.deletedIds : [];
+    remoteDelIds.forEach(id => addDeletedId(id));
+
+    const delSet    = new Set(getDeletedIds());
+    const localMsgs = getLocalMsgs();
+    const map       = new Map();
+
+    localMsgs.forEach(m => {
+        if (!delSet.has(m.id)) map.set(m.id, m);
+    });
+
+    let hasNew = false;
+    remoteMsgs.forEach(m => {
+        if (!delSet.has(m.id)) {
+            if (!map.has(m.id)) {
+                map.set(m.id, m);
+                hasNew = true;
+            }
+        }
+    });
+
+    const merged = [...map.values()].sort((a, b) => a.timestamp - b.timestamp);
+    saveLocalMsgs(merged);
+
+    if (hasNew || merged.length !== localMsgs.length) {
+        if (isChatOpen) {
+            renderMessages(merged, true);
+            lastMsgCount = merged.length;
+            localStorage.setItem('nk_chat_last_seen_count', lastMsgCount);
+        } else {
+            incrementUnreadBadge();
+        }
+    }
+}
+
 function handleIncomingEvent(event, source) {
     if (!event || !event.type) return;
 
     if (event.type === 'message') {
         handleIncomingMessage(event.data);
     } else if (event.type === 'delete') {
+        addDeletedId(event.id);
         handleRemoteDelete(event.id);
+    } else if (event.type === 'sync_request') {
+        if (event.sender !== activeSender) {
+            const current = getLocalMsgs();
+            if (current.length > 0) {
+                sendLiveEvent({
+                    type: 'sync_response',
+                    data: { messages: current, deletedIds: getDeletedIds() }
+                });
+                publishRetainedHistory(current);
+            }
+        }
+    } else if (event.type === 'sync_response') {
+        if (event.data) {
+            handleHistorySync(event.data);
+        }
     } else if (event.type === 'typing') {
         if (event.sender !== activeSender) {
             updateTypingUI(event.isTyping, event.sender);
@@ -210,6 +300,9 @@ function handleIncomingEvent(event, source) {
 
 function handleIncomingMessage(msg) {
     if (!msg || !msg.id) return;
+
+    const delSet = new Set(getDeletedIds());
+    if (delSet.has(msg.id)) return; // already deleted
 
     const current = getLocalMsgs();
     const existing = current.find(m => m.id === msg.id);
@@ -234,6 +327,7 @@ function handleIncomingMessage(msg) {
 }
 
 function handleRemoteDelete(msgId) {
+    addDeletedId(msgId);
     let current = getLocalMsgs().filter(m => m.id !== msgId);
     saveLocalMsgs(current);
     _renderedIds = _renderedIds.filter(id => id !== msgId);
@@ -399,6 +493,7 @@ async function sendChatMessage() {
 
         // 4. Send via Real-Time Live WebSocket & BroadcastChannel
         sendLiveEvent({ type: 'message', data: msg });
+        publishRetainedHistory(msgs);
 
         burstChatHearts();
 
@@ -459,6 +554,7 @@ function showDeleteConfirm(msgId) {
 
 async function deleteMessage(msgId) {
     // 1. Remove locally
+    addDeletedId(msgId);
     handleRemoteDelete(msgId);
 
     // 2. Remove in Firebase if active
@@ -475,6 +571,7 @@ async function deleteMessage(msgId) {
 
     // 3. Broadcast delete event to partner device
     sendLiveEvent({ type: 'delete', id: msgId });
+    publishRetainedHistory(getLocalMsgs());
 }
 
 // ── 13. Message Rendering with Smart Diffing ────────────────
@@ -644,8 +741,9 @@ function openChat() {
     lastMsgCount = msgs.length;
     localStorage.setItem('nk_chat_last_seen_count', lastMsgCount);
 
-    // Announce presence
+    // Announce presence & request catchup sync
     sendLiveEvent({ type: 'presence', sender: activeSender, status: 'online' });
+    sendLiveEvent({ type: 'sync_request', sender: activeSender });
 
     setTimeout(() => { const i = $('chat-text-input'); if (i) i.focus(); }, 350);
 }
